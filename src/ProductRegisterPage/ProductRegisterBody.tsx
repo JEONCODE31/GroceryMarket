@@ -4,7 +4,7 @@ import axios from 'axios';
 import styles from '../styles/ProductRegister/ProductRegister.module.css';
 
 interface ProductRegisterBodyProps {
-   onRegisterSuccess?: () => void;
+  onRegisterSuccess?: () => void;
 }
 
 const ProductRegisterBody: React.FC<ProductRegisterBodyProps> = () => {
@@ -17,7 +17,8 @@ const ProductRegisterBody: React.FC<ProductRegisterBodyProps> = () => {
     productImageUrl: '',
   });
   const [productImageFile, setProductImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
+  const [imagePreview, setImagePreview] = useState<string>(''); // 클라이언트 이미지 프리뷰
+  const [serverImagePreview, setServerImagePreview] = useState<string>(''); // 서버 이미지 프리뷰
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,7 +61,7 @@ const ProductRegisterBody: React.FC<ProductRegisterBodyProps> = () => {
       }
 
       const formData = new FormData();
-      const { productImageUrl, ...productWithoutImage } = productData; // 이미지 URL 제거
+      const { productImageUrl, ...productWithoutImage } = productData;
 
       formData.append(
         'product',
@@ -81,6 +82,13 @@ const ProductRegisterBody: React.FC<ProductRegisterBodyProps> = () => {
       console.log('상품 등록 성공:', response.data);
       alert('상품 등록/업데이트가 성공적으로 완료되었습니다.');
 
+      // ✅ 서버에서 저장된 이미지 URL을 가져와서 프리뷰로 설정
+      const savedImageUrl = response.data.imageUrl || ''; // 응답에 포함된 imageUrl
+      if (savedImageUrl) {
+        setServerImagePreview(`http://localhost:8080${savedImageUrl}`);
+      }
+
+      // 초기화
       setProductData({
         productName: '',
         categoryId: '',
@@ -97,8 +105,8 @@ const ProductRegisterBody: React.FC<ProductRegisterBodyProps> = () => {
         const msg = err.response.status === 403
           ? '권한이 없습니다. 관리자로 로그인해주세요.'
           : err.response.status === 401
-          ? '로그인이 만료되었습니다. 다시 로그인해주세요.'
-          : `상품 등록 실패: ${err.response.data || err.message}`;
+            ? '로그인이 만료되었습니다. 다시 로그인해주세요.'
+            : `상품 등록 실패: ${err.response.data || err.message}`;
         setError(msg);
         alert(`오류: ${msg}`);
       } else {
@@ -126,6 +134,7 @@ const ProductRegisterBody: React.FC<ProductRegisterBodyProps> = () => {
             required
           />
         </div>
+
         <div className={styles.formGroup}>
           <label htmlFor="categoryId" className={styles.label}>카테고리</label>
           <select
@@ -156,6 +165,7 @@ const ProductRegisterBody: React.FC<ProductRegisterBodyProps> = () => {
             <option value="17">야외/계절용품</option>
           </select>
         </div>
+
         <div className={styles.formGroup}>
           <label htmlFor="price" className={styles.label}>가격 (원)</label>
           <input
@@ -168,6 +178,7 @@ const ProductRegisterBody: React.FC<ProductRegisterBodyProps> = () => {
             required
           />
         </div>
+
         <div className={styles.formGroup}>
           <label htmlFor="stockQuantity" className={styles.label}>재고 수량</label>
           <input
@@ -180,6 +191,7 @@ const ProductRegisterBody: React.FC<ProductRegisterBodyProps> = () => {
             required
           />
         </div>
+
         <div className={styles.formGroup}>
           <label htmlFor="productDescription" className={styles.label}>상품 설명</label>
           <textarea
@@ -191,6 +203,7 @@ const ProductRegisterBody: React.FC<ProductRegisterBodyProps> = () => {
             required
           />
         </div>
+
         <div className={styles.formGroup}>
           <label htmlFor="productImage" className={styles.label}>상품 이미지</label>
           <input
@@ -203,7 +216,14 @@ const ProductRegisterBody: React.FC<ProductRegisterBodyProps> = () => {
           />
           {imagePreview && (
             <div className={styles.imagePreview}>
-              <img src={imagePreview} alt="상품 이미지 미리보기" style={{ maxWidth: '200px', maxHeight: '200px' }} />
+              <p>업로드한 이미지 미리보기:</p>
+              <img src={imagePreview} alt="클라이언트 이미지 미리보기" style={{ maxWidth: '200px', maxHeight: '200px' }} />
+            </div>
+          )}
+          {serverImagePreview && (
+            <div className={styles.imagePreview}>
+              <p>서버에 저장된 이미지:</p>
+              <img src={serverImagePreview} alt="서버 이미지 미리보기" style={{ maxWidth: '200px', maxHeight: '200px' }} />
             </div>
           )}
         </div>

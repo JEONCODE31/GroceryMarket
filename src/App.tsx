@@ -24,7 +24,7 @@ import ShoppingCart from './pages/ShoppingCart';
 import OrderHistory from './pages/OrderHistory';
 import CustomerSupportPage from './pages/CustomerSupportPage';
 import ProductRegisterPage from './pages/ProductRegisterPage';
-
+import VegetableandFruitPage from './pages/VegetableandFruitPage'; // ✨ VegetableandFruitPage 컴포넌트 임포트 추가
 
 function App(): React.ReactElement {
   const navigate = useNavigate();
@@ -120,6 +120,7 @@ function App(): React.ReactElement {
             )
         } />
         <Route path="/customer-service" element={<CustomerSupportPage isLoggedIn={isLoggedIn} username={username} />} />
+        <Route path="/vegetables-and-fruits" element={<VegetableandFruitPage />} /> {/* ✨ VegetableandFruitPage 라우트 추가 */}
         <Route
           path="/ProductRegister"
           element={isAdmin ? <ProductRegisterPage /> : <div>접근 권한이 없습니다. 관리자만 접근 가능합니다.</div>}

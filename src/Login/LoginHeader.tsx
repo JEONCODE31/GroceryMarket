@@ -26,7 +26,7 @@ const LoginHeader: React.FC = () => {
             <span className={styles.searchIcon}>🔍</span>
           </div>
         </div>
-      </div>
+    </div>
     </header>
   );
 };
