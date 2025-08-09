@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="jb.studio.ground.grocerymarket.mapper.ProductMapper">
+    <!-- productId가 Integer 타입으로 변경되었음을 반영합니다. -->
+    <select id="findProductById" resultType="jb.studio.ground.grocerymarket.domain.entity.Product">
+        SELECT productId, productName, imageUrl, price, stockQuantity
+        FROM Products
+        WHERE productId = #{productId}
+    </select>
+
+    <!-- getProductsByIds의 productIds 리스트 타입도 Integer로 변경되었습니다. -->
+    <select id="getProductsByIds" resultType="jb.studio.ground.grocerymarket.domain.entity.Product">
+        SELECT
+        productId,
+        productName,
+        imageUrl,
+        price,
+        stockQuantity
+        FROM
+        Products
+        WHERE
+        productId IN
+        <foreach collection="productIds" item="productId" open="(" separator="," close=")">
+            #{productId}
+        </foreach>
+    </select>
+
+    <insert id="insertProduct" parameterType="jb.studio.ground.grocerymarket.domain.entity.Product">
+        INSERT INTO Products (productName, categoryId, price, stockQuantity, productDescription, imageUrl, isActive)
+        VALUES (#{productName}, #{categoryId}, #{price}, #{stockQuantity}, #{productDescription}, #{imageUrl}, #{isActive})
+    </insert>
+
+    <select id="findByProductName" parameterType="string" resultType="jb.studio.ground.grocerymarket.domain.entity.Product">
+        SELECT productId, productName, categoryId, price, stockQuantity, productDescription, imageUrl, isActive, createdAt, updatedAt
+        FROM Products
+        WHERE productName = #{productName}
+    </select>
+
+    <!-- updateProductStock의 productId도 Integer 타입으로 변경되었습니다. -->
+    <update id="updateProductStock">
+        UPDATE Products
+        SET stockQuantity = #{stockQuantity}, updatedAt = CURRENT_TIMESTAMP
+        WHERE productId = #{productId}
+    </update>
+
+    <select id="findProductsByCategoryAndPagination" resultType="jb.studio.ground.grocerymarket.domain.entity.Product">
+        SELECT productId, productName, categoryId, price, stockQuantity, productDescription, imageUrl, isActive, createdAt, updatedAt
+        FROM Products
+        WHERE categoryId IN
+        <foreach item="categoryId" collection="categoryIds" open="(" separator="," close=")">
+            #{categoryId}
+        </foreach>
+        ORDER BY productId DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countProductsByCategory" resultType="int">
+        SELECT COUNT(*)
+        FROM Products
+        WHERE categoryId IN
+        <foreach item="categoryId" collection="categoryIds" open="(" separator="," close=")">
+            #{categoryId}
+        </foreach>
+    </select>
+
+    <select id="findCategoryIdByCategoryName" resultType="long">
+        SELECT categoryId
+        FROM Categories
+        WHERE categoryName = #{categoryName}
+    </select>
+
+    <select id="findChildCategoryIdsByParentId" resultType="long">
+        SELECT categoryId
+        FROM Categories
+        WHERE parentCategoryId = #{parentCategoryId}
+    </select>
+
+    <select id="findAllCategories" resultType="jb.studio.ground.grocerymarket.domain.entity.Category">
+        SELECT categoryId, categoryName, parentCategoryId, categoryLevel, createdAt, updatedAt
+        FROM Categories
+        ORDER BY categoryLevel, categoryId
+    </select>
+
+</mapper>

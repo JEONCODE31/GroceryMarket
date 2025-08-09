@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="jb.studio.ground.grocerymarket.mapper.ShoppingCartMapper">
+
+    <!-- 장바구니에 상품을 추가하거나, 이미 있는 경우 수량을 업데이트하는 단일 쿼리 (UPSERT) -->
+    <!-- `userId`와 `productId`가 중복되면 `quantity`를 업데이트합니다. -->
+    <insert id="insertOrUpdateCartItem" parameterType="jb.studio.ground.grocerymarket.domain.entity.CartItem">
+        INSERT INTO shopping_cart (user_id, product_id, quantity)
+        VALUES (#{item.userId}, #{item.productId}, #{item.quantity})
+            ON DUPLICATE KEY UPDATE
+                                 quantity = quantity + #{item.quantity}
+    </insert>
+
+    <!-- 사용자 ID와 상품 ID로 장바구니 항목 찾기 -->
+    <select id="findCartItemByUserIdAndProductId" resultType="jb.studio.ground.grocerymarket.domain.entity.CartItem">
+        SELECT cart_item_id, user_id, product_id, quantity
+        FROM shopping_cart
+        WHERE user_id = #{userId} AND product_id = #{productId}
+    </select>
+
+    <!-- 장바구니 상품 삭제 -->
+    <delete id="deleteCartItem">
+        DELETE FROM shopping_cart
+        WHERE user_id = #{userId} AND product_id = #{productId}
+    </delete>
+
+    <!-- 사용자 ID로 장바구니 아이템 상세 정보 조회 -->
+    <select id="findCartItemsWithDetailsByUserId" resultType="jb.studio.ground.grocerymarket.dto.auth.cart.CartItemDetailDto">
+        SELECT
+            ci.cart_item_id,
+            ci.user_id,
+            ci.product_id,
+            p.productName,
+            p.price,
+            ci.quantity,
+            p.imageUrl
+        FROM shopping_cart ci
+                 JOIN Products p ON ci.product_id = p.productId
+        WHERE ci.user_id = #{userId}
+        ORDER BY ci.added_at DESC
+    </select>
+
+</mapper>
