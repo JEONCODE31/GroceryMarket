@@ -1,86 +1,112 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+// src/ShoppingCart/ShoppingCartBody.tsx
+import React from 'react';
+// styles 폴더의 모듈 CSS 파일을 임포트합니다.
 import styles from '../styles/CartPage/ShoppingCartBody.module.css';
-
-
 
 interface CartItem {
   id: number;
   name: string;
   image: string;
-  quantity: number;
   price: number;
-  shippingFee: number;
-  packaging: string;
+  quantity: number;
 }
 
-const ShoppingCartBody: React.FC = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+interface ShoppingCartBodyProps {
+  cartItems: CartItem[];
+  onQuantityChange: (id: number, newQuantity: number) => void;
+  onRemoveItem: (id: number) => void;
+  // 하단 UI에 필요한 정보들
+  subtotal: number;
+  shippingFee: number;
+  total: number;
+}
 
-  useEffect(() => {
-    const access = localStorage.getItem('accessToken');
-    console.log('accessToken:', access);
-    if (!access) {
-      alert('로그인이 필요합니다.');
-      window.location.href = '/login';
-      return;
-    }
-
-    axios.get('/api/cart', {
-      headers: {
-        Authorization: `Bearer ${access}`,
-      },
-    })
-      .then((res) => {
-        setCartItems(res.data);
-      })
-      .catch((err) => {
-        console.error('장바구니 로드 실패:', err);
-      });
-  }, []);
-
-  const totalProductPrice = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-  const totalShipping = cartItems.reduce((acc, item) => acc + item.shippingFee, 0);
-  const totalPayment = totalProductPrice + totalShipping;
-
+const ShoppingCartBody: React.FC<ShoppingCartBodyProps> = ({ cartItems, onQuantityChange, onRemoveItem, subtotal, shippingFee, total }) => {
   return (
-    <div className={styles.cartContainer}>
-      <h2 className={styles.title}>장바구니</h2>
-      <div className={styles.cartHeader}>
-        <span>상품명</span>
-        <span>가격</span>
-        <span>수량</span>
-        <span>배송비</span>
-        <span>포장박스선택</span>
+    <>
+      {/* 장바구니 상품 목록 */}
+      <div className={styles.cartItemList}>
+        {cartItems.length > 0 ? (
+          cartItems.map(item => (
+            <div key={item.id} className={styles.cartItem}>
+              {/* 상품 이미지를 렌더링합니다. item.image가 없으면 대체 이미지를 사용합니다. */}
+              <img
+                src={item.image || `https://placehold.co/80x80/e2e8f0/cbd5e0?text=No+Image`}
+                alt={item.name}
+                className={styles.itemImage}
+                // 이미지가 로드되지 않았을 때 호출됩니다.
+                onError={(e) => {
+                  console.error(`Error loading image for item: ${item.name}`, e);
+                  // 에러 발생 시 대체 이미지를 표시합니다.
+                  e.currentTarget.src = `https://placehold.co/80x80/e2e8f0/cbd5e0?text=No+Image`;
+                }}
+              />
+              
+              {/* 상품 이름 및 가격 */}
+              <div className={styles.itemDetails}>
+                <p className={styles.productName}>{item.name}</p>
+                <p className={styles.itemPrice}>{item.price.toLocaleString()}원</p>
+              </div>
+
+              {/* 수량 조절 및 삭제 버튼 */}
+              <div className={styles.itemActions}>
+                <div className={styles.quantityControl}>
+                  <button
+                    className={styles.quantityButton}
+                    // 수량 감소 버튼
+                    onClick={() => onQuantityChange(item.id, item.quantity - 1)}
+                  >-</button>
+                  <input
+                    type="number"
+                    value={item.quantity}
+                    readOnly
+                    className={styles.quantityInput}
+                  />
+                  <button
+                    className={styles.quantityButton}
+                    // 수량 증가 버튼
+                    onClick={() => onQuantityChange(item.id, item.quantity + 1)}
+                  >+</button>
+                </div>
+                <button
+                  className={styles.removeButton}
+                  // 상품 삭제 버튼
+                  onClick={() => onRemoveItem(item.id)}
+                >삭제</button>
+              </div>
+            </div>
+          ))
+        ) : (
+          // 장바구니가 비어있을 경우 표시될 메시지
+          <p style={{ textAlign: 'center', color: '#4a5568' }}>장바구니가 비어있습니다.</p>
+        )}
       </div>
 
-      {cartItems.map(item => (
-        <div className={styles.cartItem} key={item.id}>
-          <div className={styles.productInfo}>
-            <img src={`http://localhost:8080${item.image}`} alt={item.name} className={styles.productImage} />
-            <span>{item.name}</span>
-          </div>
-          <span>{(item.price * item.quantity).toLocaleString()}원</span>
-          <div className={styles.quantityBox}>
-            <span>{item.quantity}</span>
-          </div>
-          <span>{item.shippingFee.toLocaleString()}원</span>
-          <span>{item.packaging}</span>
+      {/* 하단 총액 요약 정보 */}
+      <div className={styles.summaryContainer}>
+        <div className={styles.summaryRow}>
+          <span>총 상품 금액</span>
+          {/* subtotal이 undefined일 경우 0을 기본값으로 사용합니다. */}
+          <span>{(subtotal ?? 0).toLocaleString()}원</span>
         </div>
-      ))}
-
-      <div className={styles.summaryBox}>
-        <div>
-          <p>총 상품금액: {totalProductPrice.toLocaleString()}원</p>
-          <p>배송비: {totalShipping.toLocaleString()}원</p>
-          <p className={styles.total}>총 결제금액: {totalPayment.toLocaleString()}원</p>
+        <div className={styles.summaryRow}>
+          <span>배송비</span>
+          {/* shippingFee가 undefined일 경우 0을 기본값으로 사용합니다. */}
+          <span>{(shippingFee ?? 0).toLocaleString()}원</span>
         </div>
-        <div className={styles.buttons}>
-          <button className={styles.orderBtn}>주문하기</button>
-          <button className={styles.continueBtn}>계속쇼핑하기</button>
+        <div className={`${styles.summaryRow} ${styles.total}`}>
+          <span>총 결제 금액</span>
+          {/* total이 undefined일 경우 0을 기본값으로 사용합니다. */}
+          <span>{(total ?? 0).toLocaleString()}원</span>
+        </div>
+        
+        {/* 하단 버튼 그룹 */}
+        <div className={styles.buttonGroup}>
+          <button className={styles.checkoutButton}>주문하기</button>
+          <button className={styles.continueButton}>계속 쇼핑하기</button>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

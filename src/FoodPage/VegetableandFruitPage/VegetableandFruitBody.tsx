@@ -1,5 +1,3 @@
-// src/FoodPage/VegetableandFruitPage/VegetableandFruitBody.tsx
-
 import React from 'react';
 import styles from '../../styles/VegetableandFruit/VegetableandFruitBody.module.css';
 import { FaShoppingCart, FaSearch, FaHeart } from 'react-icons/fa';
