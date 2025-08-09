@@ -12,11 +12,13 @@
   border-radius: 12px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
 }
 
 .productItem:hover {
   transform: translateY(-6px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 .imageContainer {
@@ -30,6 +32,25 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* 아래는 상품 카드에 아이콘 오버레이를 추가하는 코드입니다. */
+.iconOverlay {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 40px;
+  opacity: 0; /* 기본적으로는 숨겨둡니다. */
+  transition: opacity 0.3s ease;
+}
+
+.imageContainer:hover .iconOverlay {
+  opacity: 1; /* 마우스 오버 시 보이도록 합니다. */
 }
 
 .productInfo {

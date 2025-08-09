@@ -1,8 +1,7 @@
 // src/App.tsx
 
 import React, { useState, useEffect } from 'react';
-// BrowserRouter as Router 임포트를 제거하고, Routes, Route, useNavigate, Link만 남깁니다.
-import { Routes, Route, useNavigate, Link } from 'react-router-dom'; // Router 임포트 제거 확인
+import { Routes, Route, useNavigate, Link } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 
 interface DecodedToken {
@@ -14,7 +13,6 @@ interface DecodedToken {
   sub: string;
 }
 
-// 필요한 컴포넌트 임포트 확인 (MainHeader, LoginPageBody, HomePage, RegisterPage 등)
 import MainHeader from './HomePage/MainHeader';
 import LoginPageBody from './Login/LoginPageBody';
 import HomePage from './pages/HomePage';
@@ -24,7 +22,20 @@ import ShoppingCart from './pages/ShoppingCart';
 import OrderHistory from './pages/OrderHistory';
 import CustomerSupportPage from './pages/CustomerSupportPage';
 import ProductRegisterPage from './pages/ProductRegisterPage';
-import VegetableandFruitPage from './pages/VegetableandFruitPage'; // ✨ VegetableandFruitPage 컴포넌트 임포트 추가
+import VegetableandFruitPage from './pages/VegetableandFruitPage';
+
+// Product 인터페이스가 필요합니다.
+interface Product {
+    id: number;
+    name: string;
+    image: string;
+    price: number;
+    bestNumber: number;
+}
+
+interface CartItem extends Product{
+  quantity:number;
+}
 
 function App(): React.ReactElement {
   const navigate = useNavigate();
@@ -57,6 +68,27 @@ function App(): React.ReactElement {
       handleLogout();
     }
   };
+  // ✨ 수정: carItems -> cartItems
+  const [cartItems,setCartItems]=useState<CartItem[]>([]);
+  const handleAddToCart =(productToAdd:Product):void=>{
+    setCartItems(prevItems=>{
+      const existingItem = prevItems.find(item => item.id===productToAdd.id);
+
+      if(existingItem)
+      {
+        return prevItems.map(
+          item => item.id===productToAdd.id?
+          {...item, quantity: item.quantity+1}
+          :item
+        );
+
+      }
+
+      else{
+        return[...prevItems,{...productToAdd,quantity:1}];
+      }
+    });
+  };
 
   useEffect(() => {
     const token: string | null = localStorage.getItem('accessToken');
@@ -87,10 +119,7 @@ function App(): React.ReactElement {
   };
 
   return (
-    // ✨ 여기에 React Fragment를 추가합니다. (<Router>를 제거했으므로 필수입니다!)
     <> 
-      {/* MainHeader는 모든 페이지에 걸쳐 동일하게 보이므로 <Routes> 밖에 배치합니다. */}
-      {/* 필요한 전역 상태들을 props로 전달합니다. */}
       <MainHeader
         isLoggedIn={isLoggedIn}
         username={username}
@@ -98,7 +127,6 @@ function App(): React.ReactElement {
         isAdmin={isAdmin}
       />
 
-      {/* 모든 주요 페이지 컴포넌트들을 <Routes> 안에 <Route>로 정의합니다. */}
       <Routes>
         <Route path="/login" element={<LoginPageBody onLoginSuccess={handleLoginSuccess} />} />
         <Route path="/register" element={<RegisterPage />} />
@@ -111,7 +139,7 @@ function App(): React.ReactElement {
                 <div>로그인이 필요합니다. <Link to="/login">로그인하기</Link></div>
             )
         } />
-        <Route path="/cart" element={<ShoppingCart isLoggedIn={isLoggedIn} username={username} />} />
+        <Route path="/cart" element={<ShoppingCart isLoggedIn={isLoggedIn} username={username} cartItems={cartItems} />} />
         <Route path="/orders" element={
             isLoggedIn ? (
                 <OrderHistory isLoggedIn={isLoggedIn} username={username} />
@@ -120,14 +148,15 @@ function App(): React.ReactElement {
             )
         } />
         <Route path="/customer-service" element={<CustomerSupportPage isLoggedIn={isLoggedIn} username={username} />} />
-        <Route path="/vegetables-and-fruits" element={<VegetableandFruitPage />} /> {/* ✨ VegetableandFruitPage 라우트 추가 */}
+        {/* ✨ 수정: onAddtoCart -> onAddToCart */}
+        <Route path="/vegetables-and-fruits" element={<VegetableandFruitPage onAddToCart={handleAddToCart}/>} />
         <Route
           path="/ProductRegister"
           element={isAdmin ? <ProductRegisterPage /> : <div>접근 권한이 없습니다. 관리자만 접근 가능합니다.</div>}
         />
         <Route path="*" element={<div>페이지를 찾을 수 없습니다. (404 Not Found)</div>} />
       </Routes>
-    </> // ✨ React Fragment 닫는 태그를 추가합니다.
+    </>
   );
 }
 
