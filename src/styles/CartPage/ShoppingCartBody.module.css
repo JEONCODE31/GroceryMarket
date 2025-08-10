@@ -1,157 +1,193 @@
 /* src/styles/CartPage/ShoppingCartBody.module.css */
 
 .cartItemList {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .cartItem {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    background-color: white;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cartItem:last-child {
+  border-bottom: none;
 }
 
 .itemImage {
-    /* 이 부분이 이미지를 고정된 크기로 만들고, 부모에 딱 맞게 잘라주는 역할입니다. */
-    width: 80px;
-    height: 80px;
-    object-fit: cover; /* 이미지가 컨테이너에 꽉 차도록 비율을 유지하며 잘라냄 */
-    border-radius: 0.5rem;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 0.5rem;
 }
 
 .itemDetails {
-    flex-grow: 1;
+  flex-grow: 1;
+  margin-left: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
 .productName {
-    font-weight: 600;
-    color: #1a202c;
-    margin-bottom: 0.25rem;
+  font-weight: 600;
+  font-size: 1rem;
 }
 
 .itemPrice {
-    font-size: 0.875rem;
-    color: #4a5568;
+  color: #6b7280;
+  font-size: 0.9rem;
 }
 
 .itemActions {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
 }
 
 .quantityControl {
-    display: flex;
-    align-items: center;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    overflow: hidden;
+  display: flex;
+  align-items: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
 }
 
 .quantityButton {
-    padding: 0.25rem 0.75rem;
-    background-color: #f7fafc;
-    border: none;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 1rem;
-    color: #2d3748;
-}
-
-.quantityButton:hover {
-    background-color: #edf2f7;
+  background-color: transparent;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: 600;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  color: #374151;
 }
 
 .quantityInput {
-    width: 40px;
-    text-align: center;
-    border: none;
-    background-color: white;
-    -moz-appearance: textfield;
+  width: 40px;
+  text-align: center;
+  border: none;
+  background-color: transparent;
+  font-size: 1rem;
+  -moz-appearance: textfield;
 }
-
 .quantityInput::-webkit-outer-spin-button,
 .quantityInput::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .removeButton {
-    background-color: transparent;
-    color: #e53e3e;
-    border: none;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
+  color: #ef4444;
+  font-size: 0.875rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+.removeButton:hover {
+  text-decoration: underline;
 }
 
-.summaryContainer {
-    margin-top: 2rem;
-    padding: 1.5rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    background-color: white;
+/* 하단 결제 정보 및 버튼 섹션 */
+.summarySection {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  text-align: left;
 }
 
-.summaryRow {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-    color: #4a5568;
+.summarySection > div {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
 }
 
-.summaryRow.total {
-    font-weight: 700;
-    font-size: 1.25rem;
-    color: #1a202c;
-    border-top: 1px dashed #e2e8f0;
-    margin-top: 1rem;
-    padding-top: 1rem;
+.summarySection > div > span:first-child {
+  font-weight: 400;
+  color: #374151;
+}
+.summarySection > div > span:last-child {
+  font-weight: 600;
+  color: #1f2937;
 }
 
-.buttonGroup {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-top: 1.5rem;
+.totalPrice {
+  font-weight: bold;
+  font-size: 1.5rem;
+  color: #dc2626;
+  margin-top: 1rem;
+  border-top: 1px solid #d1d5db;
+  padding-top: 1rem;
 }
 
-.checkoutButton {
-    background-color: #3182ce;
-    color: white;
-    padding: 1rem;
-    border-radius: 0.5rem;
-    font-weight: 700;
-    text-align: center;
-    cursor: pointer;
-    border: none;
-    transition: background-color 0.2s;
+.totalPrice > span:first-child {
+  font-size: 1.2rem;
+  color: #1f2937;
 }
 
-.checkoutButton:hover {
-    background-color: #2b6cb0;
+.totalPrice > span:last-child {
+  font-weight: 800;
+}
+
+.shippingOptions {
+  margin-top: 2rem;
+  font-size: 1rem;
+}
+
+.shippingOptions h3 {
+  font-weight: 700;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.shippingOptions label {
+  display: block;
+  font-weight: 500;
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+}
+
+.shippingOptions input[type="radio"] {
+  margin-right: 0.75rem;
+  accent-color: #10b981; /* 라디오 버튼 색상 */
+}
+
+.actionButtons {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.orderButton, .continueButton {
+  flex: 1;
+  padding: 1rem;
+  font-weight: bold;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  border: 1px solid transparent;
+}
+
+.orderButton {
+  background-color: #10b981;
+  color: white;
+}
+.orderButton:hover {
+  background-color: #059669;
 }
 
 .continueButton {
-    background-color: transparent;
-    color: #4a5568;
-    padding: 1rem;
-    border: 1px solid #cbd5e0;
-    border-radius: 0.5rem;
-    font-weight: 700;
-    text-align: center;
-    cursor: pointer;
-    transition: background-color 0.2s;
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
 }
-
 .continueButton:hover {
-    background-color: #f7fafc;
+  background-color: #e5e7eb;
 }
