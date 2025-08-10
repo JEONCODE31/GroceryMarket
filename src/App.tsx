@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, Link } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 interface DecodedToken {
   username?: string;
@@ -26,15 +27,15 @@ import VegetableandFruitPage from './pages/VegetableandFruitPage';
 
 // Product 인터페이스가 필요합니다.
 interface Product {
-    id: number;
-    name: string;
-    image: string;
-    price: number;
-    bestNumber: number;
+  id: number;
+  name: string;
+  image: string;
+  price: number;
+  bestNumber: number;
 }
 
-interface CartItem extends Product{
-  quantity:number;
+interface CartItem extends Product {
+  quantity: number;
 }
 
 function App(): React.ReactElement {
@@ -68,24 +69,20 @@ function App(): React.ReactElement {
       handleLogout();
     }
   };
-  // ✨ 수정: carItems -> cartItems
-  const [cartItems,setCartItems]=useState<CartItem[]>([]);
-  const handleAddToCart =(productToAdd:Product):void=>{
-    setCartItems(prevItems=>{
-      const existingItem = prevItems.find(item => item.id===productToAdd.id);
 
-      if(existingItem)
-      {
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const handleAddToCart = (productToAdd: Product): void => {
+    setCartItems(prevItems => {
+      const existingItem = prevItems.find(item => item.id === productToAdd.id);
+
+      if (existingItem) {
         return prevItems.map(
-          item => item.id===productToAdd.id?
-          {...item, quantity: item.quantity+1}
-          :item
+          item => item.id === productToAdd.id ?
+            { ...item, quantity: item.quantity + 1 }
+            : item
         );
-
-      }
-
-      else{
-        return[...prevItems,{...productToAdd,quantity:1}];
+      } else {
+        return [...prevItems, { ...productToAdd, quantity: 1 }];
       }
     });
   };
@@ -119,44 +116,42 @@ function App(): React.ReactElement {
   };
 
   return (
-    <> 
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID!}>
       <MainHeader
         isLoggedIn={isLoggedIn}
         username={username}
         handleLogout={handleLogout}
         isAdmin={isAdmin}
       />
-
       <Routes>
         <Route path="/login" element={<LoginPageBody onLoginSuccess={handleLoginSuccess} />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/HomePage" element={<HomePage isLoggedIn={isLoggedIn} username={username} />} />
         <Route path="/" element={<HomePage isLoggedIn={isLoggedIn} username={username} />} />
         <Route path="/mypage" element={
-            isLoggedIn ? (
-                <MyPage isLoggedIn={isLoggedIn} username={username} isAdmin={isAdmin} />
-            ) : (
-                <div>로그인이 필요합니다. <Link to="/login">로그인하기</Link></div>
-            )
+          isLoggedIn ? (
+            <MyPage isLoggedIn={isLoggedIn} username={username} isAdmin={isAdmin} />
+          ) : (
+            <div>로그인이 필요합니다. <Link to="/login">로그인하기</Link></div>
+          )
         } />
         <Route path="/cart" element={<ShoppingCart isLoggedIn={isLoggedIn} username={username} cartItems={cartItems} />} />
         <Route path="/orders" element={
-            isLoggedIn ? (
-                <OrderHistory isLoggedIn={isLoggedIn} username={username} />
-            ) : (
-                <div>로그인이 필요합니다. <Link to="/login">로그인하기</Link></div>
-            )
+          isLoggedIn ? (
+            <OrderHistory isLoggedIn={isLoggedIn} username={username} />
+          ) : (
+            <div>로그인이 필요합니다. <Link to="/login">로그인하기</Link></div>
+          )
         } />
         <Route path="/customer-service" element={<CustomerSupportPage isLoggedIn={isLoggedIn} username={username} />} />
-        {/* ✨ 수정: onAddtoCart -> onAddToCart */}
-        <Route path="/vegetables-and-fruits" element={<VegetableandFruitPage onAddToCart={handleAddToCart}/>} />
+        <Route path="/vegetables-and-fruits" element={<VegetableandFruitPage onAddToCart={handleAddToCart} />} />
         <Route
           path="/ProductRegister"
           element={isAdmin ? <ProductRegisterPage /> : <div>접근 권한이 없습니다. 관리자만 접근 가능합니다.</div>}
         />
         <Route path="*" element={<div>페이지를 찾을 수 없습니다. (404 Not Found)</div>} />
       </Routes>
-    </>
+    </GoogleOAuthProvider>
   );
 }
 

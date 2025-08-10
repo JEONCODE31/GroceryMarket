@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styles from '../styles/Login/LoginPageBody.module.css';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 
 // 폼 데이터의 타입을 정의합니다.
 interface LoginFormData {
@@ -106,6 +107,35 @@ const LoginPageBody: React.FC<LoginPageBodyProps> = ({ onLoginSuccess }) => {
           <div className={styles.snsLogin}>
             <button className={styles.naverBtn}>네이버 로그인</button>
             <button className={styles.kakaoBtn}>카카오톡 로그인</button>
+             {/* ✅ Google 로그인 버튼 */}
+  <GoogleLogin
+    onSuccess={async (cred: CredentialResponse) => {
+      try {
+        // Google이 준 ID Token
+        const idToken = cred.credential;
+        if (!idToken) {
+          alert('구글 로그인 토큰을 받지 못했습니다.');
+          return;
+        }
+        // 우리 백엔드에 검증 요청
+        const { data } = await axios.post('http://localhost:8080/api/auth/google', { idToken });
+
+        // 백엔드가 발급한 우리 서비스의 JWT 저장
+        localStorage.setItem('accessToken', data.accessToken);
+
+        // 기존 로컬 로그인과 동일하게 상위로 전달
+        onLoginSuccess(data.accessToken);
+        alert('구글 로그인 성공!');
+      } catch (e: any) {
+        console.error(e);
+        alert('구글 로그인 실패: ' + (e.response?.data?.message ?? '서버 오류'));
+      }
+    }}
+    onError={() => {
+      alert('구글 로그인에 실패했습니다.');
+    }}
+    useOneTap // 원탭도 켜고싶으면 유지, 아니면 제거
+  />
           </div>
         </form>
 
