@@ -39,6 +39,10 @@ interface CartItem extends Product {
 }
 
 function App(): React.ReactElement {
+
+      useEffect(() => {
+    console.log('VITE_GOOGLE_CLIENT_ID =', import.meta.env.VITE_GOOGLE_CLIENT_ID);
+  }, []);
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [username, setUsername] = useState<string | null>(null);
@@ -116,6 +120,7 @@ function App(): React.ReactElement {
   };
 
   return (
+
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID!}>
       <MainHeader
         isLoggedIn={isLoggedIn}
@@ -152,6 +157,7 @@ function App(): React.ReactElement {
         <Route path="*" element={<div>페이지를 찾을 수 없습니다. (404 Not Found)</div>} />
       </Routes>
     </GoogleOAuthProvider>
+    
   );
 }
 

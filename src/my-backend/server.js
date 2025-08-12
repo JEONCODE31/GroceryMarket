@@ -16,6 +16,7 @@ app.use(express.json()); // JSON 형식의 요청 본문 파싱
 
 // 환경 변수에서 값 가져오기
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID_BACKEND;
+console.log('SERVER audience =', GOOGLE_CLIENT_ID);
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 // Google OAuth 클라이언트 초기화
