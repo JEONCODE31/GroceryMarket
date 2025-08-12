@@ -10,39 +10,34 @@ interface LoginFormData {
   password: string;
 }
 
-// ✨ LoginPageBodyProps 인터페이스를 정의하여 onLoginSuccess prop을 받도록 합니다.
 interface LoginPageBodyProps {
   onLoginSuccess: (token: string) => void;
 }
 
-// ✨ LoginPageBody 컴포넌트가 props로 onLoginSuccess를 받도록 수정합니다.
 const LoginPageBody: React.FC<LoginPageBodyProps> = ({ onLoginSuccess }) => {
-  // 폼 데이터 상태 관리
   const [loginData, setLoginData] = useState<LoginFormData>({
     userId: '',
     password: '',
   });
 
-  // react-router-dom의 useNavigate 훅을 사용하여 페이지 이동
-  const navigate = useNavigate(); // 이 navigate는 onLoginSuccess 내부에서 사용될 예정이므로, 여기서는 직접 사용하지 않도록 변경합니다.
+  const navigate = useNavigate();
 
-  // 입력 필드 변경 핸들러
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setLoginData(prevData => ({
       ...prevData,
-      [id]: value, // userId 또는 password 필드 업데이트
+      [id]: value,
     }));
   };
 
-  // 폼 제출 핸들러 (로그인 로직)
+  // 일반 로그인 폼 제출 핸들러
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // 기본 폼 제출 동작(페이지 새로고침) 방지
+    e.preventDefault();
 
-    console.log('로그인 시도 데이터:', loginData);
+    console.log('일반 로그인 시도 데이터:', loginData);
 
     try {
-      // 백엔드 로그인 API 호출
+      // 일반 로그인 API는 8080 포트 사용
       const response = await axios.post('http://localhost:8080/login', {
         email: loginData.userId,
         password: loginData.password,
@@ -51,13 +46,11 @@ const LoginPageBody: React.FC<LoginPageBodyProps> = ({ onLoginSuccess }) => {
       console.log('로그인 성공:', response.data);
 
       const accessToken = response.data.accessToken;
-      localStorage.setItem('accessToken', accessToken); // 서버에서 받은 JWT 토큰 저장 (Local Storage 권장)
+      localStorage.setItem('accessToken', accessToken);
 
-      // ✨ App.tsx로 토큰을 전달하여 전역 상태를 업데이트하고 페이지 이동을 App.tsx에서 처리하도록 합니다.
       onLoginSuccess(accessToken);
 
       alert('로그인 성공!');
-      // ✨ navigate('/HomePage'); // 이 부분은 onLoginSuccess 내부에서 처리되므로 여기서는 제거하거나 주석 처리합니다.
 
     } catch (error) {
       console.error('로그인 실패:', error);
@@ -67,6 +60,28 @@ const LoginPageBody: React.FC<LoginPageBodyProps> = ({ onLoginSuccess }) => {
       } else {
         alert('로그인 중 알 수 없는 오류가 발생했습니다.');
       }
+    }
+  };
+
+  // Google 로그인 성공 시 핸들러
+  const handleGoogleLoginSuccess = async (cred) => {
+    try {
+      const idToken = cred.credential;
+      if (!idToken) {
+        alert('구글 로그인 토큰을 받지 못했습니다.');
+        return;
+      }
+      
+      // ✅ 구글 로그인 백엔드 API는 8082 포트 사용
+      const { data } = await axios.post('http://localhost:8082/auth/google', { idToken });
+
+      localStorage.setItem('accessToken', data.accessToken);
+
+      onLoginSuccess(data.accessToken);
+      alert('구글 로그인 성공!');
+    } catch (e: any) {
+      console.error(e);
+      alert('구글 로그인 실패: ' + (e.response?.data?.message ?? '서버 오류'));
     }
   };
 
@@ -107,35 +122,13 @@ const LoginPageBody: React.FC<LoginPageBodyProps> = ({ onLoginSuccess }) => {
           <div className={styles.snsLogin}>
             <button className={styles.naverBtn}>네이버 로그인</button>
             <button className={styles.kakaoBtn}>카카오톡 로그인</button>
-             {/* ✅ Google 로그인 버튼 */}
-  <GoogleLogin
-    onSuccess={async (cred: CredentialResponse) => {
-      try {
-        // Google이 준 ID Token
-        const idToken = cred.credential;
-        if (!idToken) {
-          alert('구글 로그인 토큰을 받지 못했습니다.');
-          return;
-        }
-        // 우리 백엔드에 검증 요청
-        const { data } = await axios.post('http://localhost:8080/api/auth/google', { idToken });
-
-        // 백엔드가 발급한 우리 서비스의 JWT 저장
-        localStorage.setItem('accessToken', data.accessToken);
-
-        // 기존 로컬 로그인과 동일하게 상위로 전달
-        onLoginSuccess(data.accessToken);
-        alert('구글 로그인 성공!');
-      } catch (e: any) {
-        console.error(e);
-        alert('구글 로그인 실패: ' + (e.response?.data?.message ?? '서버 오류'));
-      }
-    }}
-    onError={() => {
-      alert('구글 로그인에 실패했습니다.');
-    }}
-    useOneTap // 원탭도 켜고싶으면 유지, 아니면 제거
-  />
+            <GoogleLogin
+              onSuccess={handleGoogleLoginSuccess}
+              onError={() => {
+                alert('구글 로그인에 실패했습니다.');
+              }}
+              useOneTap
+            />
           </div>
         </form>
 
