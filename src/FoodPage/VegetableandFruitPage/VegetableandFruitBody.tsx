@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from '../../styles/VegetableandFruit/VegetableandFruitBody.module.css';
 import { FaShoppingCart, FaSearch, FaHeart } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom'; // useNavigate 추가
 
 interface Product {
   id: number;
@@ -12,23 +13,27 @@ interface Product {
 
 interface VegetableandFruitBodyProps {
   products: Product[];
-  // ✨ 오타 수정: onAddtoCart -> onAddToCart
   onAddToCart: (product: Product) => void;
 }
 
-// ✨ 수정: onAddToCart prop을 비구조화 할당에 추가합니다.
 const VegetableandFruitBody: React.FC<VegetableandFruitBodyProps> = ({ products, onAddToCart }) => {
+  const navigate = useNavigate(); // useNavigate 훅 사용
+
+  const handleProductClick = (productId: number) => {
+    navigate(`/vegetables-and-fruits/${productId}`);
+  };
+
   return (
     <div className={styles.productGrid}>
       {products.map((product) => (
         <div key={product.id} className={styles.productItem}>
-          <div className={styles.imageContainer}>
+          {/* onClick 이벤트 핸들러 추가 */}
+          <div className={styles.imageContainer} onClick={() => handleProductClick(product.id)}>
             <img src={`http://localhost:8080${product.image}`} alt={product.name} />
             <div className={styles.iconOverlay}>
-              {/* onAddToCart가 이제 사용 가능합니다. */}
-              <FaShoppingCart onClick={() => onAddToCart(product)} />
-              <FaSearch />
-              <FaHeart />
+              <FaShoppingCart onClick={(e) => { e.stopPropagation(); onAddToCart(product); }} />
+              <FaSearch onClick={(e) => e.stopPropagation()} />
+              <FaHeart onClick={(e) => e.stopPropagation()} />
             </div>
           </div>
           <div className={styles.productInfo}>

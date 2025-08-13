@@ -1,0 +1,110 @@
+/* src/styles/VegetableandFruit/VegetableandFruitDetail.module.css */
+
+.detailContainer {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 40px;
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 20px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.imageContainer {
+  flex: 1;
+  max-width: 500px;
+}
+
+.imageContainer img {
+  width: 100%;
+  height: auto;
+  border: 1px solid #ddd;
+}
+
+.infoContainer {
+  flex: 1;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+.productName {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.productPrice {
+  font-size: 2rem;
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.descriptionSection {
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.descriptionSection h2 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.descriptionSection p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #666;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.actionButtons button {
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.buyButton {
+  background-color: #333;
+}
+
+.cartButton {
+  background-color: #007bff;
+}
+
+/* 모바일 반응형 디자인 */
+@media (max-width: 768px) {
+  .detailContainer {
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  .imageContainer, .infoContainer {
+    max-width: 100%;
+  }
+
+  .productName {
+    font-size: 2rem;
+  }
+
+  .productPrice {
+    font-size: 1.8rem;
+  }
+
+  .actionButtons button {
+    padding: 12px 20px;
+    font-size: 1rem;
+  }
+}
