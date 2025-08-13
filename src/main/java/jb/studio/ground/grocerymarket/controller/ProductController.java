@@ -30,10 +30,10 @@ public class ProductController {
         int totalPages = (int) Math.ceil((double) totalItems / size);
 
         Map<String, Object> response = Map.of(
-            "products", products,
-            "currentPage", page,
-            "totalPages", totalPages,
-            "totalItems", totalItems
+                "products", products,
+                "currentPage", page,
+                "totalPages", totalPages,
+                "totalItems", totalItems
         );
         return ResponseEntity.ok(response);
     }
@@ -44,4 +44,4 @@ public class ProductController {
         // ProductService의 allCategories 필드는 @PostConstruct로 로드된 데이터를 가지고 있음
         return ResponseEntity.ok(productService.allCategories);
     }
-} 
+}

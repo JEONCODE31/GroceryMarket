@@ -56,6 +56,8 @@ public class SecurityConfig {
                         // ✅ CORS preflight 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                        .requestMatchers("/product/**").permitAll()
+
                         // ✅ 정적 리소스 (이미지 등) 허용
                         .requestMatchers("/uploads/**").permitAll()
 
@@ -77,6 +79,7 @@ public class SecurityConfig {
 
                         // ✅ 나머지는 인증 필요
                         .anyRequest().authenticated()
+
                 )
                 // ✅ JWT 필터 등록
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
