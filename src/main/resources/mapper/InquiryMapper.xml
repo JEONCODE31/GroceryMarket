@@ -1,0 +1,43 @@
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="jb.studio.ground.grocerymarket.mapper.InquiryMapper">
+
+    <resultMap id="InquiryMap" type="jb.studio.ground.grocerymarket.domain.entity.Inquiry">
+        <id     property="id"         column="id"/>
+        <result property="title"      column="title"/>
+        <result property="content"    column="content"/>
+        <result property="userId"     column="user_id"/>
+        <result property="userName"   column="user_name"/>
+        <result property="createdAt"  column="created_at"/>
+        <result property="status"     column="status"/>
+        <result property="fileUrl"    column="file_url"/>
+        <result property="fileName"   column="file_name"/>
+    </resultMap>
+
+    <select id="findByUserIdOrderByCreatedAtDesc" resultMap="InquiryMap">
+        SELECT id, title, content, user_id, user_name, created_at, status, file_url, file_name
+        FROM inquiry
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <select id="findById" resultMap="InquiryMap">
+        SELECT id, title, content, user_id, user_name, created_at, status, file_url, file_name
+        FROM inquiry
+        WHERE id = #{id}
+    </select>
+
+    <!-- created_at 은 DB DEFAULT를 사용하므로 INSERT에서 제외 -->
+    <insert id="insert" parameterType="jb.studio.ground.grocerymarket.domain.entity.Inquiry">
+        INSERT INTO inquiry (
+            id, title, content, user_id, user_name, status, file_url, file_name
+        ) VALUES (
+                     #{id}, #{title}, #{content}, #{userId}, #{userName},
+                     COALESCE(#{status}, '답변 대기'), #{fileUrl}, #{fileName}
+                 )
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE inquiry SET status = #{status} WHERE id = #{id}
+    </update>
+</mapper>

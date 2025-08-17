@@ -5,11 +5,9 @@
 <mapper namespace="jb.studio.ground.grocerymarket.mapper.ProductMapper">
     <!-- productId가 Integer 타입으로 변경되었음을 반영합니다. -->
     <select id="findProductById" resultType="jb.studio.ground.grocerymarket.domain.entity.Product">
-        SELECT productId, productName, imageUrl, price, stockQuantity
-        FROM Products
+        SELECT productId, productName, imageUrl, price, stockQuantity, productDescription  FROM Products
         WHERE productId = #{productId}
     </select>
-
     <!-- getProductsByIds의 productIds 리스트 타입도 Integer로 변경되었습니다. -->
     <select id="getProductsByIds" resultType="jb.studio.ground.grocerymarket.domain.entity.Product">
         SELECT
