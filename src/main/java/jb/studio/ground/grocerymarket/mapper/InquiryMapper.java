@@ -1,3 +1,4 @@
+// src/main/java/jb/studio/ground/grocerymarket/mapper/InquiryMapper.java
 package jb.studio.ground.grocerymarket.mapper;
 
 import jb.studio.ground.grocerymarket.domain.entity.Inquiry;

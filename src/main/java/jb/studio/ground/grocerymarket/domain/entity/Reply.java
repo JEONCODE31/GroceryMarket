@@ -1,27 +1,18 @@
 package jb.studio.ground.grocerymarket.domain.entity;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
-
+import lombok.Data;
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
-@Builder
-@AllArgsConstructor@NoArgsConstructor
+@Data
 public class Reply {
     private String id;
     private String inquiryId;
     private String userId;
     private String userName;
+    private boolean replyToAdmin;  // ✅ 추가
     private String content;
+    private boolean userComment;
+    private String authorId;
+    private String authorName;
     private LocalDateTime createdAt;
-
-    @JsonProperty("isUserComment")
-    private boolean isUserComment;
-
-    @JsonProperty("isReplyToAdmin")
-    private boolean isReplyToAdmin;
-
-    private String parentReplyId;
 }

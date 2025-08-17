@@ -1,43 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="jb.studio.ground.grocerymarket.mapper.ReplyMapper">
 
     <resultMap id="ReplyMap" type="jb.studio.ground.grocerymarket.domain.entity.Reply">
-        <id     property="id"              column="id"/>
-        <result property="inquiryId"       column="inquiry_id"/>
-        <result property="userId"          column="user_id"/>
-        <result property="userName"        column="user_name"/>
-        <result property="content"         column="content"/>
-        <result property="createdAt"       column="created_at"/>
-        <result property="isUserComment"   column="is_user_comment"  javaType="boolean" jdbcType="TINYINT"/>
-        <result property="isReplyToAdmin"  column="is_reply_to_admin" javaType="boolean" jdbcType="TINYINT"/>
-        <result property="parentReplyId"   column="parent_reply_id"/>
+        <id     property="id"           column="id"/>
+        <result property="inquiryId"    column="inquiry_id"/>
+        <result property="userId"       column="user_id"/>
+        <result property="userName"     column="user_name"/>
+        <result property="content"      column="content"/>
+        <result property="userComment"  column="is_user_comment"/>
+        <result property="replyToAdmin" column="is_reply_to_admin"/>
+        <result property="authorId"     column="author_id"/>
+        <result property="authorName"   column="author_name"/>
+        <result property="createdAt"    column="created_at"/>
     </resultMap>
 
     <select id="findByInquiryIdOrderByCreatedAtAsc" resultMap="ReplyMap">
-        SELECT id, inquiry_id, user_id, user_name, content, created_at,
-               is_user_comment, is_reply_to_admin, parent_reply_id
+        SELECT id, inquiry_id, user_id, user_name, content,
+               is_user_comment, is_reply_to_admin, author_id, author_name, created_at
         FROM reply
         WHERE inquiry_id = #{inquiryId}
         ORDER BY created_at ASC
     </select>
 
-    <insert id="insert" parameterType="jb.studio.ground.grocerymarket.domain.entity.Reply">
-        INSERT INTO reply (
-            id, inquiry_id, user_id, user_name, content,
-            is_user_comment, is_reply_to_admin, parent_reply_id
-        ) VALUES (
-                     #{id}, #{inquiryId}, #{userId}, #{userName}, #{content},
-                     #{isUserComment}, #{isReplyToAdmin}, #{parentReplyId}
-                 )
-    </insert>
-
-    <!-- ★ 추가: PK로 단건 재조회 -->
     <select id="findById" resultMap="ReplyMap">
-        SELECT id, inquiry_id, user_id, user_name, content, created_at,
-               is_user_comment, is_reply_to_admin, parent_reply_id
+        SELECT id, inquiry_id, user_id, user_name, content,
+               is_user_comment, is_reply_to_admin, author_id, author_name, created_at
         FROM reply
         WHERE id = #{id}
     </select>
-</mapper>
 
+    <insert id="insert" parameterType="jb.studio.ground.grocerymarket.domain.entity.Reply">
+        INSERT INTO reply
+        (id, inquiry_id, user_id, user_name, content,
+         is_user_comment, is_reply_to_admin, author_id, author_name)
+        VALUES
+            (#{id}, #{inquiryId}, #{userId}, #{userName}, #{content},
+             #{userComment}, #{replyToAdmin}, #{authorId}, #{authorName})
+    </insert>
+
+</mapper>
