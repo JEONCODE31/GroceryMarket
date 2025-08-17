@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // ✨ useNavigate 훅 임포트
 import styles from '../styles/HomePage/MainBody.module.css';
 
+
 // 로컬 이미지 경로 (src/assets 폴더에 이미지가 있다고 가정)
 import 식자재마트로고 from '../assets/grocery_logo.jpg';
 import bestProduct1 from '../assets/best_product1.jpg'; // 버팔로윙 이미지

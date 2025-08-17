@@ -1,0 +1,62 @@
+/* src/styles/VegetableandFruit/VegetableandFruitDetailFooter.module.css */
+
+.detailFooter {
+    width: 100%;
+    max-width: 1200px; /* 상세 페이지와 동일한 최대 너비 설정 */
+    margin: 40px auto 0 auto; /* 상단 여백 추가, 페이지 중앙 정렬 */
+    padding: 30px;
+    border-top: 1px solid #ddd;
+    background-color: #f9f9f9;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05); /* 약간의 그림자 효과 */
+}
+
+.footerTitle {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.footerGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2열 레이아웃 */
+    gap: 1px;
+    background-color: #eee;
+    border: 1px solid #eee;
+}
+
+.footerItem {
+    display: flex;
+    padding: 15px 20px;
+    background-color: #fff;
+    align-items: flex-start;
+}
+
+.footerLabel {
+    width: 100px;
+    min-width: 100px;
+    font-weight: bold;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.footerContent {
+    flex: 1;
+    color: #333;
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+    .detailFooter {
+        margin: 20px 20px 0 20px;
+        padding: 20px;
+    }
+    .footerGrid {
+        grid-template-columns: 1fr; /* 모바일에서는 1열 */
+    }
+    .footerItem {
+        padding: 12px 15px;
+    }
+}

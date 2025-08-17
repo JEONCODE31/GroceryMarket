@@ -1,0 +1,228 @@
+/* ContactUsWriteBody.module.css */
+
+/* 레이아웃 */
+.container {
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.card {
+  width: 100%;
+  max-width: 840px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+  padding: 28px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  margin-bottom: 20px;
+}
+
+/* 폼 */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 14px;
+  color: #444;
+  font-weight: 600;
+}
+
+/* 입력 */
+.input,
+.textarea {
+  width: 100%;
+  border: 1px solid #e5e7eb;      /* gray-200 */
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  background: #fff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: #60a5fa;           /* sky-400 */
+  box-shadow: 0 0 0 3px rgba(96,165,250,0.25);
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  color: #9ca3af;                  /* gray-400 */
+}
+
+.textarea {
+  min-height: 180px;
+  resize: vertical;
+}
+
+/* 파일 업로드 */
+.fileInputGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.fileInputLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;      /* gray-300 */
+  color: #374151;                   /* gray-700 */
+  padding: 10px 14px;
+  border-radius: 10px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.fileInputLabel:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+}
+
+.fileInput {
+  display: none;
+}
+
+.fileName {
+  font-size: 13px;
+  color: #6b7280;                   /* gray-500 */
+}
+
+/* 메시지 */
+.message {
+  margin-top: 4px;
+  background: #f0f9ff;             /* sky-50 */
+  color: #075985;                   /* sky-900 */
+  border: 1px solid #bae6fd;        /* sky-200 */
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+/* 버튼 */
+.buttonGroup {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.cancelButton,
+.submitButton {
+  position: relative;
+  border: none;
+  border-radius: 12px;
+  padding: 11px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.05s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.cancelButton {
+  background: #f3f4f6;             /* gray-100 */
+  color: #374151;                   /* gray-700 */
+}
+
+.cancelButton:hover {
+  background: #e5e7eb;             /* gray-200 */
+}
+
+.submitButton {
+  background: #2563eb;             /* blue-600 */
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.25);
+}
+
+.submitButton:hover {
+  background: #1d4ed8;             /* blue-700 */
+}
+
+.submitButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* 버튼 안 로더 */
+.spinnerContainer {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+.buttonTextLoading {
+  opacity: 0.9;
+  padding-left: 12px; /* 로더 공간 확보 */
+}
+
+/* 접근성: 모션 최소화 */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+    border-top-color: currentColor;
+  }
+}
+
+/* 다크 모드 */
+@media (prefers-color-scheme: dark) {
+  .card { background: #0f172a; box-shadow: 0 8px 30px rgba(0,0,0,0.35); }
+  .title { color: #e5e7eb; }
+  .label { color: #cbd5e1; }
+  .input, .textarea { background: #0b1220; border-color: #334155; color: #e2e8f0; }
+  .input::placeholder, .textarea::placeholder { color: #64748b; }
+  .fileInputLabel { background: #0b1220; border-color: #334155; color: #e2e8f0; }
+  .fileInputLabel:hover { background: #0f172a; border-color: #475569; }
+  .fileName { color: #94a3b8; }
+  .message { background: #0b2d4a; color: #e2f0ff; border-color: #155e75; }
+  .cancelButton { background: #111827; color: #e5e7eb; }
+  .cancelButton:hover { background: #1f2937; }
+  .submitButton { background: #2563eb; }
+}
+
+/* 유틸 */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 반응형 */
+@media (max-width: 640px) {
+  .card { padding: 20px; }
+  .title { font-size: 20px; }
+}

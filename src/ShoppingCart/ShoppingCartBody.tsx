@@ -1,6 +1,35 @@
 import React from 'react';
 import styles from '../styles/CartPage/ShoppingCartBody.module.css';
 
+// src/danal.d.ts 파일에 정의된 내용
+// TypeScript가 window.DanalPayments를 인식하도록 타입을 선언
+declare global {
+  interface DanalPaymentParams {
+    CPID: string;
+    TID: string;
+    ORDERID: string;
+    AMOUNT: number;
+    [key: string]: any; // 기타 결제 파라미터
+  }
+
+  interface DanalPaymentResponse {
+    code: string;
+    message: string;
+    [key: string]: any; // 기타 응답 데이터
+  }
+
+  interface DanalPayments {
+    requestPayment: (
+      params: DanalPaymentParams,
+      callback: (response: DanalPaymentResponse) => void
+    ) => void;
+  }
+
+  interface Window {
+    DanalPayments: DanalPayments;
+  }
+}
+
 interface CartItemDetailDto {
   cartItemId: number;
   productId: number;
@@ -26,6 +55,62 @@ const ShoppingCartBody: React.FC<ShoppingCartBodyProps> = ({ cartItems, setCartI
   const shippingCost = 7000;
   const quantityShippingCost = 3500;
   const totalPayment = totalItemPrice + shippingCost + quantityShippingCost;
+
+  // 주문하기 버튼 클릭시 호출될 함수
+  const handleOrderClick = async () => {
+    const token = localStorage.getItem('accessToken');
+
+    const orderData = {
+      cartItems: cartItems.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
+      totalPayment: totalPayment,
+    };
+
+    try {
+      const response = await fetch('http://localhost:8080/api/order/prepare', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // 액세스 토큰을 Authorization 헤더에 Bearer 토큰 형식으로 담아 보냅니다.
+          'Authorization': `Bearer ${token}`, 
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      if (!response.ok) {
+        throw new Error('결제 준비 중 서버 오류가 발생했습니다.');
+      }
+
+      const paymentInfo = await response.json();
+
+      if (window.DanalPayments) {
+        window.DanalPayments.requestPayment({
+          CPID: paymentInfo.cpid,
+          TID: paymentInfo.tid,
+          ORDERID: paymentInfo.orderId,
+          AMOUNT: paymentInfo.amount,
+          itemName: paymentInfo.itemName,
+          userName: paymentInfo.userName,
+          userTel: paymentInfo.userTel,
+        }, function(response) {
+          if (response.code === '0000') {
+            alert('결제가 성공적으로 완료되었습니다.');
+            // TODO: 결제 성공 후 백엔드에 결제 승인 요청 로직 추가
+          } else {
+            alert('결제 실패: ' + response.message);
+          }
+        });
+      } else {
+        alert('다날 결제 SDK가 로드되지 않았습니다.');
+      }
+    } catch (error) {
+      console.error('결제 준비 중 오류 발생:', error);
+      alert('결제 준비 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+  };
+
 
   // 상품 삭제 핸들러
   const handleRemoveItem = (cartItemId: number) => {
@@ -136,7 +221,7 @@ const ShoppingCartBody: React.FC<ShoppingCartBodyProps> = ({ cartItems, setCartI
           </div>
           
           <div className={styles.actionButtons}>
-            <button className={styles.orderButton}>주문하기</button>
+            <button className={styles.orderButton} onClick={handleOrderClick}>주문하기</button>
             <button className={styles.continueButton}>계속 쇼핑하기</button>
           </div>
         </>

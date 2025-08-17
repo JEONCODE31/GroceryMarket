@@ -56,6 +56,7 @@ const MainHeader: React.FC<MainHeaderProps> = ({ isLoggedIn, username, handleLog
             <li className={styles.navItem}><Link to="/cart">장바구니</Link></li>
             <li className={styles.navItem}><Link to="/orders">주문조회</Link></li>
             <li className={styles.navItem}><Link to="/customer-service">고객센터</Link></li>
+             <li className={styles.navItem}><Link to="/contactus">문의하기</Link></li>
           </ul>
 
           {/* 검색 바 */}
