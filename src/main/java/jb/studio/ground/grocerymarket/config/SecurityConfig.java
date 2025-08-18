@@ -70,7 +70,8 @@ public class SecurityConfig {
                         .requestMatchers("/register", "/login", "/", "/foodresult", "/welfareresult",
                                 "/api/products/by-category", "/api/products/categories",
                                 "/uploads/**", "/product/**").permitAll()
-
+                        .requestMatchers("/api/payments/**").permitAll()
+                        // ✅ 일반결제 준비 엔드포인트 허용 (지금 403 나는 곳)
                         // 인증 필요한 엔드포인트
                         .requestMatchers("/api/cart/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/productregister").hasRole("ADMIN")
