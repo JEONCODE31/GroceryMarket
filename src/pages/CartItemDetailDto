@@ -1,0 +1,15 @@
+// src/pages/ShoppingCart.tsx
+
+import React, { useState, useEffect } from 'react';
+import ShoppingCartBody from '../ShoppingCart/ShoppingCartBody';
+import { useNavigate } from 'react-router-dom';
+
+interface CartItemDetailDto {
+  cartItemId: number; // ⭐️ 이 줄을 추가합니다.
+  productId: number;
+  productName: string;
+  price: number;
+  quantity: number;
+  imageUrl: string;
+}
+// ... 기존 코드 유지

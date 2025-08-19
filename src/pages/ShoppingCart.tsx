@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import ShoppingCartFooter from '../ShoppingCart/ShoppingCartFooter';
 import ShoppingCartBody from '../ShoppingCart/ShoppingCartBody';
 import { useNavigate } from 'react-router-dom';
 
-// 장바구니 아이템 상세 정보를 위한 인터페이스
+// 아임포트 라이브러리를 전역에서 접근하기 위한 타입 선언
+declare global {
+  interface Window {
+    IMP: any;
+  }
+}
+
 interface CartItemDetailDto {
   cartItemId: number;
   productId: number;
@@ -20,9 +25,17 @@ const ShoppingCartPage = () => {
 
   const token = localStorage.getItem('accessToken');
 
-  // 장바구니 상품 목록을 불러오는 비동기 함수
+  // 아임포트 초기화
+  useEffect(() => {
+    const { IMP } = window;
+    if (IMP) {
+      IMP.init('imp32172778'); // 가맹점 식별코드
+    } else {
+      console.error("아임포트 라이브러리가 로드되지 않았습니다.");
+    }
+  }, []);
+
   const fetchCartItems = async () => {
-    // 토큰이 없을 경우, 로딩을 멈추고 함수 종료
     if (!token) {
       setLoading(false);
       console.error("No access token found. Please log in.");
@@ -39,7 +52,6 @@ const ShoppingCartPage = () => {
       });
 
       if (!response.ok) {
-        // 403 Forbidden 에러 처리: 권한이 없을 경우 사용자에게 알림
         if (response.status === 403) {
           alert('장바구니 정보를 불러올 권한이 없습니다. 다시 로그인해 주세요.');
         }
@@ -49,7 +61,7 @@ const ShoppingCartPage = () => {
       const data: CartItemDetailDto[] = await response.json();
       setCartItems(data);
     } catch (error) {
-      console.error('Error fetching cart items:', error);
+      console.error("Error fetching cart items:", error);
     } finally {
       setLoading(false);
     }
@@ -59,34 +71,96 @@ const ShoppingCartPage = () => {
     fetchCartItems();
   }, [token]);
 
-  // 상품 금액을 계산하는 함수
-  const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
-  
-  // 수량 변경 핸들러
   const handleQuantityChange = (cartItemId: number, newQuantity: number) => {
-    setCartItems(currentItems => 
+    setCartItems(currentItems =>
       currentItems.map(item =>
         item.cartItemId === cartItemId ? { ...item, quantity: Math.max(1, newQuantity) } : item
       )
     );
   };
 
-  // 상품 삭제 핸들러
   const handleRemoveItem = (cartItemId: number) => {
     setCartItems(currentItems =>
       currentItems.filter(item => item.cartItemId !== cartItemId)
     );
   };
 
+  const calculateSubtotal = () => {
+    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  };
+
   const subtotal = calculateSubtotal();
-  const shippingFee = 0; // 배송비는 임시로 0으로 설정
+  const shippingFee = 0; // 배송비는 0원으로 가정
   const totalAmount = subtotal + shippingFee;
 
-  // 주문하기 버튼 클릭 핸들러 (더미)
   const handleOrderClick = () => {
-    alert('주문하기 버튼이 클릭되었습니다.');
+    if (cartItems.length === 0) {
+      alert("주문할 상품이 없습니다.");
+      return;
+    }
+
+    const { IMP } = window;
+    IMP.request_pay(
+      {
+        pg: 'danal_tpay',
+        pay_method: 'card',
+        merchant_uid: `mid_${new Date().getTime()}`,
+        name: cartItems[0].productName + (cartItems.length > 1 ? ` 외 ${cartItems.length - 1}건` : ''),
+        amount: totalAmount,
+        buyer_email: localStorage.getItem('email') || '',
+        buyer_name: localStorage.getItem('buyerName') || '',
+        buyer_tel: '010-1234-5678', // 테스트용 전화번호
+      },
+      async (rsp: any) => {
+        if (rsp.success) {
+          try {
+            // 주문 정보 백엔드에 전송
+            const response = await fetch('http://localhost:8080/api/orders', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                // 백엔드에서 필요한 주문 데이터 구조에 맞게 수정 필요
+                // imp_uid와 merchant_uid는 결제 검증에 사용됨
+                impUid: rsp.imp_uid,
+                merchantUid: rsp.merchant_uid,
+                cartItems: cartItems.map(item => ({
+                  productId: item.productId,
+                  quantity: item.quantity
+                }))
+              }),
+            });
+
+            if (response.ok) {
+              // 주문 성공 시 로컬 캐시에 주문 정보 저장 (마이페이지 임시 사용)
+              localStorage.setItem('lastPaidItems', JSON.stringify({
+                at: new Date().toISOString(),
+                items: cartItems,
+                payment: {
+                  impUid: rsp.imp_uid,
+                  merchantUid: rsp.merchant_uid,
+                  method: rsp.pay_method,
+                }
+              }));
+              
+              setCartItems([]);
+              alert('결제가 완료되었습니다!');
+              navigate('/mypage'); 
+            } else {
+              throw new Error('주문 데이터 서버 전송 실패');
+            }
+          } catch (error) {
+            console.error('주문 처리 중 오류:', error);
+            alert('결제는 성공했으나, 주문 처리 중 오류가 발생했습니다. 고객센터에 문의해주세요.');
+          }
+
+        } else {
+          alert(`결제에 실패했습니다. 에러 내용: ${rsp.error_msg}`);
+        }
+      }
+    );
   };
 
   if (loading) {
@@ -97,7 +171,6 @@ const ShoppingCartPage = () => {
     );
   }
 
-  // 토큰이 없어서 로그인이 필요한 경우
   if (!token) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
@@ -107,26 +180,16 @@ const ShoppingCartPage = () => {
     );
   }
   
-  // 장바구니에 상품이 없는 경우 (토큰은 있지만 데이터가 없을 때)
-  if (cartItems.length === 0) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-xl font-semibold">장바구니에 담긴 상품이 없습니다.</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="container mx-auto p-4 md:p-8 font-sans">
-      <ShoppingCartBody 
-        cartItems={cartItems} 
-        onQuantityChange={handleQuantityChange}
-        onRemoveItem={handleRemoveItem}
-        subtotal={subtotal}
-        shippingFee={shippingFee}
-        total={totalAmount}
-      />
-    </div>
+    <ShoppingCartBody 
+      cartItems={cartItems} 
+      onQuantityChange={handleQuantityChange} 
+      onRemoveItem={handleRemoveItem} 
+      subtotal={subtotal} 
+      shippingFee={shippingFee}
+      total={totalAmount}
+      onOrderClick={handleOrderClick}
+    />
   );
 };
 

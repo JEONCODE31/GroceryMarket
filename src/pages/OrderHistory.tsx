@@ -1,10 +1,10 @@
 import React from 'react';
-import OrderHistoryHeader from '../OrderHistory/OrderHistoryHeader';
+import OrderHistoryBody from '../OrderHistory/OrderHistoryBody';
 
 const OrderHistoryPage = () => {
   return (
     <div>
-      <OrderHistoryHeader />
+      <OrderHistoryBody />
       {/* 기타 OrderHistoryPage 내용 */}
     </div>
   );

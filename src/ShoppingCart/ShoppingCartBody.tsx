@@ -1,10 +1,8 @@
-// src/components/CartPage/ShoppingCartBody.tsx
-import React, { useCallback } from 'react';
-import styles from '../styles/CartPage/ShoppingCartBody.module.css';
+import React, { useCallback, useMemo, useEffect } from 'react';
+import styles from '@/styles/CartPage/ShoppingCartBody.module.css';
 import { loadIamportScript } from '../lib/loadIamport';
 
-// ────────────────────────────────────────────────────────────────
-// (선택) 다날 직연동 SDK 타입 – 네 프로젝트에 danal.d.ts가 없다면 여기 둬도 됩니다.
+// (선택) 다날 직연동 SDK 타입 - 네 프로젝트에 danal.d.ts가 없다면 여기 둬도 됩니다.
 declare global {
   interface DanalPaymentParams {
     CPID: string;
@@ -35,119 +33,170 @@ declare global {
     };
   }
 }
-// ────────────────────────────────────────────────────────────────
 
-interface CartItemDetailDto {
+interface CartItem {
   cartItemId: number;
   productId: number;
   productName: string;
   price: number;
   quantity: number;
-  imageUrl: string;
+  imageUrl?: string;
 }
 
-interface ShoppingCartBodyProps {
-  cartItems: CartItemDetailDto[];
-  setCartItems: React.Dispatch<React.SetStateAction<CartItemDetailDto[]>>;
+interface Props {
+  cartItems: CartItem[];
+  onQuantityChange: (cartItemId: number, newQuantity: number) => void;
+  onRemoveItem: (cartItemId: number) => void;
+  subtotal: number;
+  shippingFee: number;
+  total: number;
+  // onOrderClick prop은 아래 handleOrderClick 함수로 대체되므로 필요하지 않습니다.
 }
 
-const ShoppingCartBody: React.FC<ShoppingCartBodyProps> = ({ cartItems, setCartItems }) => {
-  // 금액 합계
-  const totalItemPrice = cartItems.reduce((t, i) => t + i.price * i.quantity, 0);
-  const shippingCost = 7000;
-  const quantityShippingCost = 3500;
-  const totalPayment = totalItemPrice + shippingCost + quantityShippingCost;
+const ShoppingCartBody: React.FC<Props> = ({
+  cartItems,
+  onQuantityChange,
+  onRemoveItem,
+  subtotal,
+  shippingFee,
+  total,
+}) => {
+  // useEffect를 사용하여 Iamport 스크립트를 동적으로 로드하고 초기화합니다.
+  useEffect(() => {
+    // 환경 변수에서 가맹점 식별코드 가져오기
+    const impCode = import.meta.env.VITE_IAMPORT_CODE;
 
-  // ────────────────────────────────────────────────────────────────
-  // (옵션) 일반결제: 다날 직연동 흐름
-  // 백엔드에 POST /api/order/prepare 가 있어야 합니다.
-  // ────────────────────────────────────────────────────────────────
-  const handleOrderClick = useCallback(async () => {
-  if (typeof window === 'undefined') return;
+    // 가맹점 코드가 없으면 에러를 출력하고 함수를 종료합니다.
+    if (!impCode) {
+      console.error("VITE_IAMPORT_CODE is not set in your .env file.");
+      alert('가맹점 코드가 설정되지 않았습니다. 결제 기능을 사용할 수 없습니다.');
+      return;
+    }
 
-  try {
-    // 1) 아임포트 SDK 로드 & init
-    await loadIamportScript();
-    window.IMP?.init(import.meta.env.VITE_IAMPORT_CODE); // ex) imp78074852
-
-    // 2) 주문번호 생성 (임의)
-    const merchantUid = 'order-' + Date.now();
-    const token = localStorage.getItem('accessToken');
-
-    // 3) 장바구니 금액으로 "일반결제" 호출 (고객정보는 원하는 값으로 세팅)
-    window.IMP?.request_pay(
-      {
-        pg: 'danal.A010002002',    // 다날 채널 명시
-        pay_method: 'phone',       // 휴대폰 일반결제
-        merchant_uid: merchantUid,
-        name: '장바구니 결제',
-        amount: totalPayment,      // 장바구니 총 결제금액
-        buyer_email: 'user@example.com',
-        buyer_name: '홍길동',
-        buyer_tel: '010-1234-5678',
-      },
-      async (rsp: any) => {
-        if (rsp?.success) {
-          // 4) 서버 검증 (이미 만들어 둔 complete 재사용)
-          await fetch('http://localhost:8080/api/payments/iamport/complete', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token || ''}` },
-            body: JSON.stringify({
-              impUid: rsp.imp_uid,
-              merchantUid,
-              amount: totalPayment,
-            }),
-          });
-          alert('일반결제 성공');
-        } else {
-          alert(`일반결제 실패: ${rsp?.error_msg || '알 수 없는 오류'}`);
-        }
+    // 아임포트 스크립트 로드
+    loadIamportScript().then(() => {
+      // 스크립트 로드 후 IMP 객체가 있는지 확인하고 초기화
+      const { IMP } = window;
+      if (IMP) {
+        IMP.init(impCode);
+      } else {
+        console.error("Failed to load Iamport script.");
       }
-    );
-  } catch (e: any) {
-    console.error(e);
-    alert(e?.message || '일반결제 초기화 실패');
-  }
-}, [totalPayment]);
+    }).catch(error => {
+      console.error("Error loading Iamport script:", error);
+    });
+  }, []);
 
-  // ────────────────────────────────────────────────────────────────
-  // 정기결제(다날 휴대폰 빌링) – PortOne(아임포트) SDK 사용
-  // ────────────────────────────────────────────────────────────────
+  const decQty = useCallback((cartItemId: number, currentQuantity: number) => {
+    onQuantityChange(cartItemId, currentQuantity - 1);
+  }, [onQuantityChange]);
+
+  const incQty = useCallback((cartItemId: number, currentQuantity: number) => {
+    onQuantityChange(cartItemId, currentQuantity + 1);
+  }, [onQuantityChange]);
+
+  const setQty = useCallback((cartItemId: number, qty: number) => {
+    const parsedQty = Math.max(1, Math.min(99, Number.isFinite(qty) ? Math.floor(qty) : 1));
+    onQuantityChange(cartItemId, parsedQty);
+  }, [onQuantityChange]);
+
+  const handleRemove = useCallback((cartItemId: number) => {
+    onRemoveItem(cartItemId);
+  }, [onRemoveItem]);
+
+  const memoizedSubtotal = useMemo(() => subtotal, [subtotal]);
+  const memoizedShippingFee = useMemo(() => shippingFee, [shippingFee]);
+  const memoizedTotal = useMemo(() => total, [total]);
+
+  // VITE_API_BASE_URL 환경변수를 사용
+  const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+  
+  // (옵션) 일반결제: 다날 직연동 흐름
+  const handleOrderClick = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      if (!window.IMP) {
+        // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
+        console.error('결제 라이브러리가 로드되지 않았습니다.');
+        return;
+      }
+      
+      const merchantUid = 'order-' + Date.now();
+      const token = localStorage.getItem('accessToken');
+
+      window.IMP.request_pay(
+        {
+          pg: 'danal.A010002002',     // 다날 채널 명시
+          pay_method: 'phone',       // 휴대폰 일반결제
+          merchant_uid: merchantUid,
+          name: '장바구니 결제',
+          amount: memoizedTotal,     // 장바구니 총 결제금액
+          buyer_email: localStorage.getItem('email') || '',
+          buyer_name: localStorage.getItem('buyerName') || '홍길동',
+          buyer_tel: '010-1234-5678', // 테스트용 전화번호
+        },
+        async (rsp: any) => {
+          if (rsp?.success) {
+            await fetch('http://localhost:8080/api/payments/iamport/complete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token || ''}` },
+              body: JSON.stringify({
+                impUid: rsp.imp_uid,
+                merchantUid,
+                amount: memoizedTotal,
+              }),
+            });
+            // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
+            console.log('일반결제 성공');
+            // 성공 후 장바구니 비우기 및 페이지 이동 등 로직 추가
+          } else {
+            // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
+            console.error(`일반결제 실패: ${rsp?.error_msg || '알 수 없는 오류'}`);
+          }
+        }
+      );
+    } catch (e: any) {
+      console.error(e);
+      // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
+      console.error(e?.message || '일반결제 초기화 실패');
+    }
+  }, [memoizedTotal]);
+
+  // 정기결제(다날 휴대폰 빌링) - PortOne(아임포트) SDK 사용
   const handleSubscribeClick = useCallback(async () => {
     if (typeof window === 'undefined') return;
 
     try {
-      // 1) SDK 로드 & 초기화 (반드시 .env: VITE_IAMPORT_CODE=imp78074852)
-      await loadIamportScript();
-      window.IMP?.init(import.meta.env.VITE_IAMPORT_CODE); // ex) imp78074852
+      if (!window.IMP) {
+        // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
+        console.error('결제 라이브러리가 로드되지 않았습니다.');
+        return;
+      }
 
-      // 2) 준비 API 호출 (customerUid/merchantUid/buyer 수신)
       const token = localStorage.getItem('accessToken');
       const prepRes = await fetch('http://localhost:8080/api/payments/iamport/prepare', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token || ''}` },
-        body: JSON.stringify({ planCode: 'MONTHLY_BASIC', amount: 10000 }), // 고정 요금
+        body: JSON.stringify({ planCode: 'MONTHLY_BASIC', amount: 10000 }),
       });
       if (!prepRes.ok) throw new Error('정기결제 준비 실패');
       const { customerUid, merchantUid, buyer } = await prepRes.json();
 
-      // 3) 결제창 호출 (다날-휴대폰 정기 채널 명시)
-      window.IMP?.request_pay(
+      window.IMP.request_pay(
         {
-          pg: 'danal.A010002002', // ✅ 반드시 명시(테스트 MID)
+          pg: 'danal.A010002002',
           pay_method: 'phone',
           merchant_uid: merchantUid,
           name: '정기결제(최초 인증 결제)',
-          amount: 10000,          // 이후 매월 동일 금액
-          customer_uid: customerUid, // ✅ 필수
+          amount: 10000,
+          customer_uid: customerUid,
           buyer_email: buyer?.email,
           buyer_name:  buyer?.name,
           buyer_tel:   buyer?.tel,
-          // m_redirect_url: 'https://your.site/pay/complete' // 모바일 웹이면 권장
         },
         async (rsp: any) => {
           if (rsp?.success) {
-            // 4) 서버 검증
             const verify = await fetch('http://localhost:8080/api/payments/iamport/complete', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token || ''}` },
@@ -160,121 +209,112 @@ const ShoppingCartBody: React.FC<ShoppingCartBodyProps> = ({ cartItems, setCartI
               }),
             });
             if (!verify.ok) throw new Error('결제 검증 실패');
-            alert('정기결제 등록(최초 결제) 성공');
+            // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
+            console.log('정기결제 등록(최초 결제) 성공');
           } else {
-            alert(`정기결제 등록 실패: ${rsp?.error_msg || '알 수 없는 오류'}`);
+            // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
+            console.error(`정기결제 등록 실패: ${rsp?.error_msg || '알 수 없는 오류'}`);
           }
         }
       );
     } catch (e: any) {
       console.error(e);
-      alert(e?.message || '결제 초기화 실패');
+      // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
+      console.error(e?.message || '결제 초기화 실패');
     }
   }, []);
 
-  // 아이템 삭제/수량 변경
-  const handleRemoveItem = useCallback((cartItemId: number) => {
-    setCartItems(prev => prev.filter(i => i.cartItemId !== cartItemId));
-  }, [setCartItems]);
 
-  const handleQuantityChange = useCallback((cartItemId: number, change: number) => {
-    setCartItems(prev =>
-      prev.map(item =>
-        item.cartItemId === cartItemId
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
-          : item
-      )
-    );
-  }, [setCartItems]);
+  if (cartItems.length === 0) {
+    return <div className={styles.emptyCartMessage}>장바구니에 담긴 상품이 없습니다.</div>;
+  }
 
   return (
-    <div className="bg-white rounded-xl shadow-2xl p-6 md:p-10">
-      {cartItems.length > 0 ? (
-        <>
-          {/* (b) key 경고 해결: key에 cartItemId-productId 조합 사용 */}
-          <div className={styles.cartItemList}>
-            {cartItems.map((item) => (
-              <div
-                key={`${item.cartItemId}-${item.productId}`}
-                className={styles.cartItem}
-              >
+    <div className={styles.container}>
+      <h2 className={styles.pageTitle}>장바구니</h2>
+      
+      <ul className={styles.cartItemList}>
+        {cartItems.map((i, index) => {
+          const src = i.imageUrl?.startsWith('http')
+            ? i.imageUrl
+            : `${baseURL}${i.imageUrl || ''}`;
+          
+          return (
+            <li key={i.cartItemId || `${i.productId}-${index}`} className={styles.cartItem}>
+              {i.imageUrl && (
                 <img
-                  src={`http://localhost:8080${item.imageUrl}`}
-                  alt={item.productName}
+                  src={src}
+                  alt={i.productName}
                   className={styles.itemImage}
                 />
-                <div className={styles.itemDetails}>
-                  <span className={styles.productName}>{item.productName}</span>
-                  <span className={styles.itemPrice}>{item.price.toLocaleString()}원</span>
-                </div>
-                <div className={styles.itemActions}>
-                  <div className={styles.quantityControl}>
-                    <button
-                      className={styles.quantityButton}
-                      onClick={() => handleQuantityChange(item.cartItemId, -1)}
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      value={item.quantity}
-                      readOnly
-                      className={styles.quantityInput}
-                    />
-                    <button
-                      className={styles.quantityButton}
-                      onClick={() => handleQuantityChange(item.cartItemId, 1)}
-                    >
-                      +
-                    </button>
-                  </div>
-                  <button
-                    className={styles.removeButton}
-                    onClick={() => handleRemoveItem(item.cartItemId)}
-                  >
-                    삭제
-                  </button>
+              )}
+              <div className={styles.itemDetails}>
+                <div className={styles.productName}>{i.productName}</div>
+                <div className={styles.itemPrice}>
+                  수량 {i.quantity} · {(i.price * i.quantity).toLocaleString()}원
                 </div>
               </div>
-            ))}
-          </div>
-
-          <hr className="my-6" />
-
-          {/* 합계 섹션 */}
-          <div className={styles.summarySection}>
-            <div><span>총 상품 금액:</span><span>{totalItemPrice.toLocaleString()}원</span></div>
-            <div><span>즉시 할인 금액:</span><span>- 0원</span></div>
-            <div><span>일반 배송비:</span><span>+ {shippingCost.toLocaleString()}원</span></div>
-            <div><span>수량별 배송비:</span><span>+ {quantityShippingCost.toLocaleString()}원</span></div>
-            <div className={styles.totalPrice}><span>총 결제 금액:</span><span>{totalPayment.toLocaleString()}원</span></div>
-          </div>
-
-          {/* 배송 옵션 */}
-          <div className={styles.shippingOptions}>
-            <h3>배송 방법 변경</h3>
-            <label><input type="radio" name="shippingMethod" /> 직배송</label>
-            <label><input type="radio" name="shippingMethod" /> 직배송 추가</label>
-            <label><input type="radio" name="shippingMethod" defaultChecked /> 택배배송</label>
-            <label><input type="radio" name="shippingMethod" /> 바로드림</label>
-          </div>
-
-          {/* 액션 버튼 */}
-          <div className={styles.actionButtons}>
-            <button className={styles.orderButton} onClick={handleOrderClick}>
-              주문하기(일반결제)
-            </button>
-            <button className={styles.continueButton}>계속 쇼핑하기</button>
-            <button className={styles.orderButton} onClick={handleSubscribeClick}>
-              휴대폰 정기결제(빌링) 등록
-            </button>
-          </div>
-        </>
-      ) : (
-        <div className="text-center text-gray-500 text-xl py-12">
-          장바구니에 담긴 상품이 없습니다.
+              <div className={styles.itemActions}>
+                <div className={styles.quantityControl} aria-label="수량 조절">
+                  <button
+                    className={styles.quantityButton}
+                    onClick={() => decQty(i.cartItemId, i.quantity)}
+                    type="button"
+                  >
+                    −
+                  </button>
+                  <input
+                    className={styles.quantityInput}
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={i.quantity}
+                    onChange={(e) => setQty(i.cartItemId, Number(e.target.value))}
+                    onBlur={(e) => setQty(i.cartItemId, Number(e.target.value))}
+                    inputMode="numeric"
+                  />
+                  <button
+                    className={styles.quantityButton}
+                    onClick={() => incQty(i.cartItemId, i.quantity)}
+                    type="button"
+                  >
+                    +
+                  </button>
+                </div>
+                <button
+                  className={styles.removeButton}
+                  onClick={() => handleRemove(i.cartItemId)}
+                  type="button"
+                >
+                  삭제
+                </button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      <div className={styles.summarySection}>
+        <div>
+          <span>상품금액</span>
+          <span>{memoizedSubtotal.toLocaleString()}원</span>
         </div>
-      )}
+        <div>
+          <span>배송비</span>
+          <span>{memoizedShippingFee.toLocaleString()}원</span>
+        </div>
+        <div className={styles.totalPrice}>
+          <span>결제금액:&nbsp;</span>
+          <span>{memoizedTotal.toLocaleString()}원</span>
+        </div>
+        <div className={styles.actionButtons}>
+          <button 
+            className={styles.orderButton}
+            onClick={handleOrderClick}
+          >
+            주문하기 (총 {memoizedTotal.toLocaleString()}원)
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

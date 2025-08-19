@@ -50,7 +50,6 @@ function App(): React.ReactElement {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [username, setUsername] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  // ⬇️ 추가: userId 상태 (JWT의 sub 사용)
   const [userId, setUserId] = useState<string | null>(null);
 
   const decodeTokenAndSetUserStatus = (token: string | null): void => {
@@ -58,7 +57,7 @@ function App(): React.ReactElement {
       setIsLoggedIn(false);
       setUsername(null);
       setIsAdmin(false);
-      setUserId(null); // ⬅️ 토큰 없을 때 초기화
+      setUserId(null);
       return;
     }
     try {
@@ -74,7 +73,7 @@ function App(): React.ReactElement {
       setIsLoggedIn(true);
       setUsername(decoded.username || decoded.email || '사용자');
       setIsAdmin(decoded.role === 'admin');
-      setUserId(decoded.sub || null); // ⬅️ 사용자 식별자 저장
+      setUserId(decoded.sub || null);
     } catch (error) {
       console.error('JWT 토큰 디코딩 실패:', error);
       handleLogout();
@@ -96,6 +95,7 @@ function App(): React.ReactElement {
     });
   };
 
+  // JWT 토큰과 장바구니 데이터를 localStorage에서 로드
   useEffect(() => {
     const token: string | null = localStorage.getItem('accessToken');
     decodeTokenAndSetUserStatus(token);
@@ -109,6 +109,18 @@ function App(): React.ReactElement {
     };
   }, []);
 
+  // 장바구니 아이템을 localStorage에서 로드
+  useEffect(() => {
+    try {
+      const storedCartItems = localStorage.getItem('cartItems');
+      if (storedCartItems) {
+        setCartItems(JSON.parse(storedCartItems));
+      }
+    } catch (error) {
+      console.error("Failed to load cart from localStorage", error);
+    }
+  }, []); // 빈 배열: 최초 마운트 시 한 번만 실행
+
   const handleLoginSuccess = (token: string): void => {
     localStorage.setItem('accessToken', token);
     decodeTokenAndSetUserStatus(token);
@@ -120,7 +132,7 @@ function App(): React.ReactElement {
     setIsLoggedIn(false);
     setUsername(null);
     setIsAdmin(false);
-    setUserId(null); // ⬅️ 로그아웃 시 초기화
+    setUserId(null);
     alert('로그아웃 되었습니다.');
     navigate('/login');
   };
@@ -137,7 +149,6 @@ function App(): React.ReactElement {
       <Routes>
         <Route path="/login" element={<LoginPageBody onLoginSuccess={handleLoginSuccess} />} />
         <Route path="/register" element={<RegisterPage />} />
-
         <Route path="/HomePage" element={<HomePage isLoggedIn={isLoggedIn} username={username} />} />
         <Route path="/" element={<HomePage isLoggedIn={isLoggedIn} username={username} />} />
 
@@ -167,13 +178,23 @@ function App(): React.ReactElement {
           }
         />
 
-        <Route path="/cart" element={<ShoppingCart isLoggedIn={isLoggedIn} username={username} cartItems={cartItems} />} />
-        <Route path="/customer-service" element={<CustomerSupportPage isLoggedIn={isLoggedIn} username={username} />} />
+        {/* ⭐️ 이 부분에 setCartItems prop 추가 ⭐️ */}
+        <Route
+          path="/cart"
+          element={
+            <ShoppingCart
+              isLoggedIn={isLoggedIn}
+              username={username}
+              cartItems={cartItems}
+              setCartItems={setCartItems}
+            />
+          }
+        />
 
+        <Route path="/customer-service" element={<CustomerSupportPage isLoggedIn={isLoggedIn} username={username} />} />
         <Route path="/vegetables-and-fruits" element={<VegetableandFruitPage onAddToCart={handleAddToCart} />} />
         <Route path="/vegetables-and-fruits/:productId" element={<VegetableandFruitDetailPage />} />
 
-        {/* 신규: /contactus (로그인 필요) */}
         <Route
           path="/contactus"
           element={
