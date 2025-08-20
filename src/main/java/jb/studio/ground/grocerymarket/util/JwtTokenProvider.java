@@ -31,7 +31,9 @@ public class JwtTokenProvider {
     /** JWT 생성: subject=email, role 클레임 포함 */
     public String generateToken(String email, String role) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", role);
+
+        // ⭐️ 전달받은 역할에 "ROLE_" 접두사를 추가합니다.
+        claims.put("role", "ROLE_" + role.toUpperCase());
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -55,6 +57,9 @@ public class JwtTokenProvider {
         return extractClaim(token, Claims::getSubject);
     }
 
+    // ⚠️ 수정된 부분: getEmailFromJwt 메서드 삭제 및 extractEmail로 통일
+    // getEmailFromJwt는 extractEmail과 동일한 기능을 수행하므로 중복을 피하기 위해 하나만 남겨둡니다.
+
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
@@ -69,6 +74,12 @@ public class JwtTokenProvider {
         final String extractedEmail = extractEmail(token);
         return (extractedEmail.equals(email) && !isTokenExpired(token));
     }
+
+    // ⚠️ 추가된 부분: JwtAuthenticationFilter에서 사용할 validateToken 메서드
+    public Boolean validateToken(String token) {
+        return !isTokenExpired(token);
+    }
+
 
     /** (선택) role 헬퍼 */
     public String getRole(String token) {

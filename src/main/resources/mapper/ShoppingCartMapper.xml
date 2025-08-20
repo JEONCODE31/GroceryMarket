@@ -1,14 +1,45 @@
-<select id="findCartItemsWithDetailsByUserId" parameterType="Integer" resultType="CartItemDetailDto">
-    SELECT
-    ci.cart_item_id as cartItemId,  p.product_id as productId,
-    p.product_name as productName,
-    p.image_url as imageUrl,
-    p.price as price,
-    ci.quantity as quantity
-    FROM
-    cart_item ci
-    JOIN
-    product p ON ci.product_id = p.product_id
-    WHERE
-    ci.user_id = #{userId}
-</select>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="jb.studio.ground.grocerymarket.mapper.ShoppingCartMapper">
+
+    <select id="findCartItemsWithDetailsByUserId" parameterType="Integer" resultType="CartItemDetailDto">
+        SELECT
+        ci.cart_item_id as cartItemId,
+        p.productId as productId,
+        p.productName as productName,
+        p.imageUrl as imageUrl,
+        p.price as price,
+        ci.quantity as quantity
+        FROM
+        cart_item ci
+        JOIN
+        Products p ON ci.product_id = p.productId
+        WHERE
+        ci.user_id = #{userId}
+    </select>
+
+    <insert id="insertOrUpdateCartItem">
+        INSERT INTO cart_item (user_id, product_id, quantity)
+        VALUES (#{item.userId}, #{item.productId}, #{item.quantity})
+        ON DUPLICATE KEY UPDATE
+        quantity = quantity + #{item.quantity}
+    </insert>
+
+    <select id="findCartItemByUserIdAndProductId" resultType="CartItem">
+        SELECT * FROM cart_item WHERE user_id = #{userId} AND product_id = #{productId}
+    </select>
+
+    <update id="updateCartItemQuantity">
+        UPDATE cart_item
+        SET quantity = #{quantity}
+        WHERE user_id = #{userId} AND product_id = #{productId}
+    </update>
+
+    <delete id="deleteCartItem">
+        DELETE FROM cart_item WHERE user_id = #{userId} AND product_id = #{productId}
+    </delete>
+
+</mapper>

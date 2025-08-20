@@ -15,8 +15,9 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
-import javax.sql.DataSource; // Spring Boot 3.x에서는 jakarta.servlet으로 변경되었지만, DataSource는 javax.sql 사용.
+import javax.sql.DataSource;
 
 @Configuration
 @EnableTransactionManagement
@@ -52,10 +53,9 @@ public class RootConfig {
     public SqlSessionFactory sqlSessionFactory() throws Exception {
         SqlSessionFactoryBean sqlSessionFactoryBean = new SqlSessionFactoryBean();
         sqlSessionFactoryBean.setDataSource(dataSource());
-        // *** 이 부분이 변경되었습니다: 'mappers' -> 'mapper' ***
-        sqlSessionFactoryBean.setMapperLocations(applicationContext.getResources("classpath:mapper/**/*.xml"));
-        // 'setTypeAliasesPackage' 중복 문제도 수정되었습니다.
-        sqlSessionFactoryBean.setTypeAliasesPackage("jb.studio.ground.grocerymarket.domain.entity");
+        sqlSessionFactoryBean.setMapperLocations(new PathMatchingResourcePatternResolver().getResources("classpath:mapper/**/*.xml"));
+        // 두 패키지를 콤마(,)로 구분하여 등록했습니다.
+        sqlSessionFactoryBean.setTypeAliasesPackage("jb.studio.ground.grocerymarket.domain.entity,jb.studio.ground.grocerymarket.dto.auth.cart");
         return sqlSessionFactoryBean.getObject();
     }
 

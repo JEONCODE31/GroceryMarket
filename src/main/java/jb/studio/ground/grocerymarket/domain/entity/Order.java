@@ -11,13 +11,15 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Order {
-    private Long orderId;
+    private Long id;
     private Long userId;
-    private LocalDateTime orderDate;
-    private BigDecimal totalAmount;
-    private String shippingAddress;
-    private String orderStatus; // "pending", "processing", etc.
-    private String paymentMethod;
-    private Boolean paymentStatus;
-    private LocalDateTime updatedAt;
+    private Long amount;
+    private String status;       // "결제완료" 등
+    private String impUid;       // iamport imp_uid
+    private String merchantUid;  // iamport merchant_uid
+    private String method;       // "card" 등
+    private java.time.LocalDateTime createdAt;
+
+    private java.util.List<OrderItem> items;
+    // getter/setter
 }

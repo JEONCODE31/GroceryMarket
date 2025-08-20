@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="jb.studio.ground.grocerymarket.mapper.OrderMapper">
+
+    <!-- orders 기본 컬럼(현재 스키마 기준) -->
+    <sql id="BaseOrderColumns">
+        orderId, userId, orderDate, totalAmount, shippingAddress,
+        orderStatus, paymentMethod, paymentStatus, updatedAt
+        <!--
+        // orders 테이블에 아래 2컬럼을 나중에 추가하면 주석 해제하세요.
+        , merchantUid, impUid
+        -->
+    </sql>
+
+    <!-- OrderItem(조인 표시용 컬럼 포함) -->
+    <resultMap id="orderItemMap" type="jb.studio.ground.grocerymarket.domain.entity.OrderItem">
+        <id     property="orderItemId" column="orderItemId"/>
+        <result property="orderId"     column="orderId"/>
+        <result property="productId"   column="productId"/>
+        <result property="quantity"    column="quantity"/>
+        <result property="priceAtOrder" column="priceAtOrder"/>
+        <!-- products 조인 결과(도메인에 해당 필드 존재해야 함) -->
+        <result property="productName" column="productName"/>
+        <result property="imageUrl"    column="imageUrl"/>
+    </resultMap>
+
+    <!-- Order 본문 -->
+    <resultMap id="orderMap" type="jb.studio.ground.grocerymarket.domain.entity.Order">
+        <id     property="orderId"        column="orderId"/>
+        <result property="userId"         column="userId"/>
+        <result property="orderDate"      column="orderDate"/>
+        <result property="totalAmount"    column="totalAmount"/>
+        <result property="shippingAddress" column="shippingAddress"/>
+        <result property="orderStatus"    column="orderStatus"/>
+        <result property="paymentMethod"  column="paymentMethod"/>
+        <result property="paymentStatus"  column="paymentStatus"/>
+        <result property="updatedAt"      column="updatedAt"/>
+        <!-- orders에 컬럼 추가 시 사용
+        <result property="merchantUid"    column="merchantUid"/>
+        <result property="impUid"         column="impUid"/>
+        -->
+        <collection property="items"
+                    ofType="jb.studio.ground.grocerymarket.domain.entity.OrderItem"
+                    column="orderId"
+                    select="selectOrderItemsByOrderId"/>
+    </resultMap>
+
+    <!-- 내 주문 목록 -->
+    <select id="selectOrdersByUserId" resultMap="orderMap">
+        SELECT
+        <include refid="BaseOrderColumns"/>
+        FROM orders
+        WHERE userId = #{userId}
+        ORDER BY orderDate DESC
+    </select>
+
+    <!-- 특정 주문의 아이템 목록(상품명/이미지 포함) -->
+    <select id="selectOrderItemsByOrderId" resultMap="orderItemMap">
+        SELECT
+            oi.orderItemId,
+            oi.orderId,
+            oi.productId,
+            oi.quantity,
+            oi.priceAtOrder,
+            p.productName AS productName,
+            p.imageUrl    AS imageUrl
+        FROM orderitems oi
+                 JOIN products p ON p.productId = oi.productId
+        WHERE oi.orderId = #{orderId}
+        ORDER BY oi.orderItemId ASC
+    </select>
+
+    <!-- 주문 생성 -->
+    <insert id="insertOrder" useGeneratedKeys="true" keyProperty="orderId">
+        INSERT INTO orders
+        (userId, orderDate, totalAmount, shippingAddress,
+        orderStatus, paymentMethod, paymentStatus, updatedAt
+        <!-- , merchantUid, impUid  // 컬럼 추가 시 사용 -->
+        )
+        VALUES
+        (#{userId}, NOW(), #{totalAmount}, #{shippingAddress},
+        #{orderStatus}, #{paymentMethod}, #{paymentStatus}, NOW()
+        <!-- , #{merchantUid}, #{impUid} -->
+        )
+    </insert>
+
+    <!-- 주문 아이템 생성 -->
+    <insert id="insertOrderItem" useGeneratedKeys="true" keyProperty="orderItemId">
+        INSERT INTO orderitems
+            (orderId, productId, quantity, priceAtOrder)
+        VALUES
+            (#{orderId}, #{productId}, #{quantity}, #{priceAtOrder})
+    </insert>
+
+    <!-- (선택) merchantUid 조회 — 컬럼 추가한 경우에만 사용 -->
+    <select id="selectByMerchantUid" resultMap="orderMap">
+        SELECT
+        <include refid="BaseOrderColumns"/>
+        FROM orders
+        WHERE merchantUid = #{merchantUid}
+        LIMIT 1
+    </select>
+
+</mapper>

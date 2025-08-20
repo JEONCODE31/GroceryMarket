@@ -11,7 +11,7 @@ import java.util.Collections;
 @Getter
 public class CustomUserDetails implements UserDetails {
 
-    private final Long userId; // ✨ userId 필드 추가
+    private final Long userId; // ✨ userId 필드
     private final String email;
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
@@ -20,8 +20,9 @@ public class CustomUserDetails implements UserDetails {
         this.userId = user.getUserId();
         this.email = user.getEmail();
         this.password = user.getPassword();
+        // ⭐️ User 엔티티의 역할을 그대로 사용 (JwtTokenProvider에서 이미 ROLE_를 붙임)
         this.authorities = Collections.singletonList(
-                new SimpleGrantedAuthority("ROLE_" + user.getUserType().toUpperCase())
+                new SimpleGrantedAuthority(user.getUserType())
         );
     }
 

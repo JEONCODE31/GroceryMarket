@@ -10,9 +10,12 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderItem {
-    private Long orderItemId;
+    private Long id;
     private Long orderId;
     private Long productId;
+    private String productName;
+    private Long price;
     private Integer quantity;
-    private BigDecimal priceAtOrder;
+    private String imageUrl;
+    // getter/setter
 }
