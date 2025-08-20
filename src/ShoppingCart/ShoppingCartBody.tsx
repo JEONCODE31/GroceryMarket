@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useMemo, useEffect, useState } from 'react';
 import styles from '@/styles/CartPage/ShoppingCartBody.module.css';
 import { loadIamportScript } from '../lib/loadIamport';
 
@@ -61,8 +61,15 @@ const ShoppingCartBody: React.FC<Props> = ({
   shippingFee,
   total,
 }) => {
+  const [isIamportLoaded, setIsIamportLoaded] = useState(false);
+  const [isUserAuthenticated, setIsUserAuthenticated] = useState(false); // 사용자 인증 상태 (로그인 여부)
+
   // useEffect를 사용하여 Iamport 스크립트를 동적으로 로드하고 초기화합니다.
   useEffect(() => {
+    // 사용자 인증 상태 확인
+    const token = localStorage.getItem('accessToken');
+    setIsUserAuthenticated(!!token);
+
     // 환경 변수에서 가맹점 식별코드 가져오기
     const impCode = import.meta.env.VITE_IAMPORT_CODE;
 
@@ -79,6 +86,7 @@ const ShoppingCartBody: React.FC<Props> = ({
       const { IMP } = window;
       if (IMP) {
         IMP.init(impCode);
+        setIsIamportLoaded(true); // 로드 성공 시 상태 업데이트
       } else {
         console.error("Failed to load Iamport script.");
       }
@@ -113,67 +121,88 @@ const ShoppingCartBody: React.FC<Props> = ({
   
   // (옵션) 일반결제: 다날 직연동 흐름
   const handleOrderClick = useCallback(async () => {
-    if (typeof window === 'undefined') return;
-
+    // ⚠️ 두 가지 상태 모두 확인
+    if (!isUserAuthenticated || !isIamportLoaded || typeof window === 'undefined' || !window.IMP) {
+      console.error('결제 라이브러리가 로드되지 않았거나, 사용자가 인증되지 않았습니다.');
+      return;
+    }
+    
     try {
-      if (!window.IMP) {
-        // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
-        console.error('결제 라이브러리가 로드되지 않았습니다.');
-        return;
-      }
-      
       const merchantUid = 'order-' + Date.now();
       const token = localStorage.getItem('accessToken');
 
+      // ⚠️ 수정된 부분: 토큰을 확인하여 헤더에 포함할지 결정
+      const headers: HeadersInit = {
+          'Content-Type': 'application/json'
+      };
+      if (token) {
+          headers.Authorization = `Bearer ${token}`;
+      }
+
       window.IMP.request_pay(
         {
-          pg: 'danal.A010002002',     // 다날 채널 명시
-          pay_method: 'phone',       // 휴대폰 일반결제
+          pg: 'danal.A010002002',      // 다날 채널 명시
+          pay_method: 'phone',        // 휴대폰 일반결제
           merchant_uid: merchantUid,
           name: '장바구니 결제',
-          amount: memoizedTotal,     // 장바구니 총 결제금액
+          amount: memoizedTotal,      // 장바구니 총 결제금액
           buyer_email: localStorage.getItem('email') || '',
           buyer_name: localStorage.getItem('buyerName') || '홍길동',
           buyer_tel: '010-1234-5678', // 테스트용 전화번호
         },
         async (rsp: any) => {
           if (rsp?.success) {
-            await fetch('http://localhost:8080/api/payments/iamport/complete', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token || ''}` },
-              body: JSON.stringify({
-                impUid: rsp.imp_uid,
-                merchantUid,
-                amount: memoizedTotal,
-              }),
-            });
-            // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
-            console.log('일반결제 성공');
-            // 성공 후 장바구니 비우기 및 페이지 이동 등 로직 추가
+            try {
+              // 서버로 결제 정보를 전송하는 fetch 요청
+              const response = await fetch('http://localhost:8080/api/payments/iamport/complete', {
+                method: 'POST',
+                headers: headers, // ⚠️ 수정된 헤더 사용
+                body: JSON.stringify({
+                  impUid: rsp.imp_uid,
+                  merchantUid: rsp.merchant_uid,
+                  amount: memoizedTotal,
+                }),
+              });
+
+              if (response.ok) {
+                // 서버 응답이 성공(200 OK)일 때만 실행
+                alert('결제가 완료되었습니다!');
+                console.log('일반결제 성공: 서버에 결제 정보 전달 완료');
+                // 주문 완료 후 장바구니 비우기 또는 페이지 이동 로직 추가
+              } else {
+                // 서버 응답이 실패(4xx, 5xx)일 때
+                const errorText = await response.text();
+                alert(`결제는 성공했으나, 주문 처리 중 오류가 발생했습니다: ${errorText}`);
+                console.error(`서버 응답 오류: ${response.status} - ${errorText}`);
+              }
+            } catch (serverError: any) {
+              // 네트워크 오류 등 fetch 요청 자체의 실패
+              alert('결제는 성공했으나, 주문 처리 중 네트워크 오류가 발생했습니다.');
+              console.error('서버 통신 오류:', serverError);
+            }
           } else {
-            // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
+            // 아임포트 결제 실패
+            alert(`결제 실패: ${rsp?.error_msg || '알 수 없는 오류'}`);
             console.error(`일반결제 실패: ${rsp?.error_msg || '알 수 없는 오류'}`);
           }
         }
       );
     } catch (e: any) {
       console.error(e);
-      // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
+      alert(e?.message || '일반결제 초기화 실패');
       console.error(e?.message || '일반결제 초기화 실패');
     }
-  }, [memoizedTotal]);
+  }, [memoizedTotal, isUserAuthenticated, isIamportLoaded]); // 의존성 배열에 상태 추가
 
   // 정기결제(다날 휴대폰 빌링) - PortOne(아임포트) SDK 사용
   const handleSubscribeClick = useCallback(async () => {
-    if (typeof window === 'undefined') return;
+    // ⚠️ 두 가지 상태 모두 확인
+    if (!isUserAuthenticated || !isIamportLoaded || typeof window === 'undefined' || !window.IMP) {
+      console.error('결제 라이브러리가 로드되지 않았거나, 사용자가 인증되지 않았습니다.');
+      return;
+    }
 
     try {
-      if (!window.IMP) {
-        // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
-        console.error('결제 라이브러리가 로드되지 않았습니다.');
-        return;
-      }
-
       const token = localStorage.getItem('accessToken');
       const prepRes = await fetch('http://localhost:8080/api/payments/iamport/prepare', {
         method: 'POST',
@@ -197,22 +226,29 @@ const ShoppingCartBody: React.FC<Props> = ({
         },
         async (rsp: any) => {
           if (rsp?.success) {
-            const verify = await fetch('http://localhost:8080/api/payments/iamport/complete', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token || ''}` },
-              body: JSON.stringify({
-                impUid: rsp.imp_uid,
-                merchantUid: rsp.merchant_uid,
-                customerUid,
-                amount: 10000,
-                planCode: 'MONTHLY_BASIC',
-              }),
-            });
-            if (!verify.ok) throw new Error('결제 검증 실패');
-            // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
-            console.log('정기결제 등록(최초 결제) 성공');
+            try {
+              const verify = await fetch('http://localhost:8080/api/payments/iamport/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token || ''}` },
+                body: JSON.stringify({
+                  impUid: rsp.imp_uid,
+                  merchantUid: rsp.merchant_uid,
+                  customerUid,
+                  amount: 10000,
+                  planCode: 'MONTHLY_BASIC',
+                }),
+              });
+              if (!verify.ok) throw new Error('결제 검증 실패');
+              // ⚠️ 추가된 부분: 정기결제 성공 시 알림 표시
+              alert('정기결제 등록(최초 결제)이 완료되었습니다!');
+              console.log('정기결제 등록(최초 결제) 성공');
+            } catch (serverError: any) {
+              alert('정기결제는 성공했으나, 주문 처리 중 오류가 발생했습니다.');
+              console.error('서버 통신 오류:', serverError);
+            }
           } else {
             // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
+            alert(`정기결제 등록 실패: ${rsp?.error_msg || '알 수 없는 오류'}`);
             console.error(`정기결제 등록 실패: ${rsp?.error_msg || '알 수 없는 오류'}`);
           }
         }
@@ -220,10 +256,10 @@ const ShoppingCartBody: React.FC<Props> = ({
     } catch (e: any) {
       console.error(e);
       // alert 대신 사용자 정의 모달 또는 메시지 박스 사용
+      alert(e?.message || '결제 초기화 실패');
       console.error(e?.message || '결제 초기화 실패');
     }
-  }, []);
-
+  }, [isUserAuthenticated, isIamportLoaded]); // 의존성 배열에 상태 추가
 
   if (cartItems.length === 0) {
     return <div className={styles.emptyCartMessage}>장바구니에 담긴 상품이 없습니다.</div>;
@@ -310,8 +346,14 @@ const ShoppingCartBody: React.FC<Props> = ({
           <button 
             className={styles.orderButton}
             onClick={handleOrderClick}
+            // ⚠️ 수정된 부분: isUserAuthenticated 상태를 추가로 확인하여 로그인 여부에 따라 버튼을 활성화/비활성화
+            disabled={!isIamportLoaded || !isUserAuthenticated} 
           >
-            주문하기 (총 {memoizedTotal.toLocaleString()}원)
+            {isUserAuthenticated
+              ? isIamportLoaded
+                ? `주문하기 (총 ${memoizedTotal.toLocaleString()}원)`
+                : '결제 로딩 중...'
+              : '로그인 후 주문하기'}
           </button>
         </div>
       </div>

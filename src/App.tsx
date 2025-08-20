@@ -165,18 +165,7 @@ function App(): React.ReactElement {
           }
         />
 
-        <Route
-          path="/orders"
-          element={
-            isLoggedIn ? (
-              <OrderHistory isLoggedIn={isLoggedIn} username={username} />
-            ) : (
-              <div>
-                로그인이 필요합니다. <Link to="/login">로그인하기</Link>
-              </div>
-            )
-          }
-        />
+       
 
         {/* ⭐️ 이 부분에 setCartItems prop 추가 ⭐️ */}
         <Route
