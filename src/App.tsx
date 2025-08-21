@@ -5,13 +5,16 @@ import { Routes, Route, useNavigate, Link } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
+// 새로운 AdminPage 컴포넌트를 임포트합니다.
+import Admin from './pages/AdminPage';
+
 interface DecodedToken {
   username?: string;
   email?: string;
   role?: string;
   exp: number;
   iat: number;
-  sub: string; // 사용자 고유 ID(백엔드 발급 기준)
+  sub: string;
 }
 
 import VegetableandFruitPage from './pages/VegetableandFruitPage';
@@ -27,7 +30,6 @@ import ProductRegisterPage from './pages/ProductRegisterPage';
 import VegetableandFruitDetailPage from './pages/VegetableandFruitDetailPage';
 import ContactUsPage from './pages/ContactUsPage';
 
-// Product 인터페이스
 interface Product {
   id: number;
   name: string;
@@ -72,7 +74,10 @@ function App(): React.ReactElement {
 
       setIsLoggedIn(true);
       setUsername(decoded.username || decoded.email || '사용자');
-      setIsAdmin(decoded.role === 'admin');
+      
+      // ✨ 이 부분을 'ROLE_ADMIN'으로 수정했습니다.
+      setIsAdmin(decoded.role === 'ROLE_ADMIN'); 
+      
       setUserId(decoded.sub || null);
     } catch (error) {
       console.error('JWT 토큰 디코딩 실패:', error);
@@ -95,7 +100,6 @@ function App(): React.ReactElement {
     });
   };
 
-  // JWT 토큰과 장바구니 데이터를 localStorage에서 로드
   useEffect(() => {
     const token: string | null = localStorage.getItem('accessToken');
     decodeTokenAndSetUserStatus(token);
@@ -109,7 +113,6 @@ function App(): React.ReactElement {
     };
   }, []);
 
-  // 장바구니 아이템을 localStorage에서 로드
   useEffect(() => {
     try {
       const storedCartItems = localStorage.getItem('cartItems');
@@ -119,7 +122,7 @@ function App(): React.ReactElement {
     } catch (error) {
       console.error("Failed to load cart from localStorage", error);
     }
-  }, []); // 빈 배열: 최초 마운트 시 한 번만 실행
+  }, []);
 
   const handleLoginSuccess = (token: string): void => {
     localStorage.setItem('accessToken', token);
@@ -164,10 +167,7 @@ function App(): React.ReactElement {
             )
           }
         />
-
-       
-
-        {/* ⭐️ 이 부분에 setCartItems prop 추가 ⭐️ */}
+        
         <Route
           path="/cart"
           element={
@@ -197,6 +197,7 @@ function App(): React.ReactElement {
           }
         />
 
+        {/* ⭐️ 기존의 상품 등록 페이지 라우트 ⭐️ */}
         <Route
           path="/ProductRegister"
           element={
@@ -208,6 +209,18 @@ function App(): React.ReactElement {
           }
         />
 
+        {/* 👇🏻 새로 추가된 관리자 페이지 라우트 */}
+        <Route
+          path="/Admin"
+          element={
+            isAdmin ? (
+              <Admin />
+            ) : (
+              <div>접근 권한이 없습니다. 관리자만 접근 가능합니다.</div>
+            )
+          }
+        />
+        
         <Route path="*" element={<div>페이지를 찾을 수 없습니다. (404 Not Found)</div>} />
       </Routes>
     </GoogleOAuthProvider>

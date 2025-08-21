@@ -44,6 +44,10 @@ const MainHeader: React.FC<MainHeaderProps> = ({ isLoggedIn, username, handleLog
                 {isAdmin && (
                   <li className={styles.navItem}><Link to="/ProductRegister">상품등록</Link></li>
                 )}
+                {/* ✨ isAdmin이 true일 때만 관리자페이지 버튼 표시 */}
+                {isAdmin && (
+                  <li className={styles.navItem}><Link to="/Admin">관리자페이지</Link></li>
+                )}
               </>
             ) : (
               // 로그아웃 상태일 때
@@ -54,9 +58,8 @@ const MainHeader: React.FC<MainHeaderProps> = ({ isLoggedIn, username, handleLog
             )}
             <li className={styles.navItem}><Link to="/mypage">마이페이지</Link></li>
             <li className={styles.navItem}><Link to="/cart">장바구니</Link></li>
-            <li className={styles.navItem}><Link to="/Admin">관리자페이지</Link></li>
             <li className={styles.navItem}><Link to="/customer-service">고객센터</Link></li>
-             <li className={styles.navItem}><Link to="/contactus">문의하기</Link></li>
+            <li className={styles.navItem}><Link to="/contactus">문의하기</Link></li>
           </ul>
 
           {/* 검색 바 */}
