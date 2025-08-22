@@ -195,6 +195,8 @@ const MainBody: React.FC<MainBodyProps> = ({ isLoggedIn, username }) => {
                             <li><span className={styles.dayLabel}>평일</span> <span className={styles.timeLabel}>06:00 ~ 21:00</span></li>
                             <li><span className={styles.dayLabel}>주말</span> <span className={styles.timeLabel}>07:00 ~ 18:00</span></li>
                             <li><span className={styles.dayLabel}>휴무</span> <span className={styles.timeLabel}>설날, 공휴일</span></li>
+                             <li><span  className={styles.timeLabel}>택배나 배송은 주말엔 안되고 평일 09시부터 14시 사이에만 이용이가능하며
+                                지역별로 배송 기간이 상이합니다 .</span></li>
                         </ul>
                     </div>
                 </div>
