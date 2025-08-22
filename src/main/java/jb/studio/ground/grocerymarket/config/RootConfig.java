@@ -28,7 +28,7 @@ import javax.sql.DataSource;
         "jb.studio.ground.grocerymarket.util",
         "jb.studio.ground.grocerymarket.security"
 })
-@PropertySource("classpath:application.properties")
+
 public class RootConfig {
 
     private final ApplicationContext applicationContext;

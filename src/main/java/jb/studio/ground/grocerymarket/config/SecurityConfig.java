@@ -4,6 +4,7 @@ import jb.studio.ground.grocerymarket.security.JwtAuthenticationFilter;
 import jb.studio.ground.grocerymarket.security.CustomUserDetailService;
 import lombok.RequiredArgsConstructor;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -18,7 +19,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -26,7 +26,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 @EnableWebSecurity
-@EnableMethodSecurity(jsr250Enabled = true) // ← @PermitAll 쓸 수 있게
+@EnableMethodSecurity(jsr250Enabled = true)
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -61,22 +61,34 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // ✅ 문의 전부 허용
-                        .requestMatchers("/api/inquiries/**").permitAll()
-                        // ✅ 혹시 모를 패턴 이슈에 대비, replies GET을 명시적으로 한 줄 더
-                        .requestMatchers(HttpMethod.GET, "/api/inquiries/*/replies").permitAll()
-
                         // 공개 엔드포인트
                         .requestMatchers("/register", "/login", "/", "/foodresult", "/welfareresult",
                                 "/api/products/by-category", "/api/products/categories",
                                 "/uploads/**", "/product/**").permitAll()
                         .requestMatchers("/api/payments/**").permitAll()
-                        // ✅ 일반결제 준비 엔드포인트 허용 (지금 403 나는 곳)
-                        // 인증 필요한 엔드포인트
+                        .requestMatchers("/api/inquiries/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/inquiries/*/replies").permitAll()
+
+                        // 인증 필요
                         .requestMatchers("/api/cart/**").authenticated()
+
+                        // 관리자 전용
                         .requestMatchers(HttpMethod.POST, "/productregister").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
+                )
+                // 401/403 응답을 명확히
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> {
+                            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+                            res.setContentType("application/json;charset=UTF-8");
+                            res.getWriter().write("{\"code\":\"UNAUTHORIZED\"}");
+                        })
+                        .accessDeniedHandler((req, res, e) -> {
+                            res.setStatus(HttpServletResponse.SC_FORBIDDEN); // 403
+                            res.setContentType("application/json;charset=UTF-8");
+                            res.getWriter().write("{\"code\":\"FORBIDDEN\"}");
+                        })
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -88,7 +100,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of("*")); // Authorization 포함
         config.setExposedHeaders(List.of("Location"));
         config.setAllowCredentials(true);
 
