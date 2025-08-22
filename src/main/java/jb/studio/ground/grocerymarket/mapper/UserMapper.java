@@ -14,7 +14,9 @@ import java.util.List;
 public interface UserMapper {
     @Select("SELECT * FROM Users where userId = #{userId}")
     User selectByUserId(Long userId);
-
+    // 새롭게 추가하는 메서드: 모든 회원 조회
+    @Select("SELECT userId, userName, email, createdAt FROM users")
+    List<User> findAllUsers();
     // ✨ 이 부분이 잘못되었습니다. 'email ='로 수정해야 합니다.
     @Select("SELECT * FROM Users WHERE email = #{email}") // 수정된 부분
     User selectUserByEmail(String email);
@@ -24,7 +26,5 @@ public interface UserMapper {
 
     void insertUser(User newUser);
 
-
     void insertProduct(Product product);
-
 }
